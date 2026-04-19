@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-仓库已经完成高端 Admin 可操作工作台、Dashboard 中控首页、Analytics 分析台、Logs 问题定位台，以及便携分发结构骨架扩充，但当前机器没有可直接调用的 Go 环境，因此尚未完成真实编译与打包。
+仓库已经完成高端 Admin 可操作工作台、Dashboard 中控首页、Analytics 分析台、Logs 问题定位台，以及 Bootstrap / Security / Release / Version / Build Checks 页面与后端占位服务扩充，但当前机器没有可直接调用的 Go 环境，因此尚未完成真实编译与打包。
 
 ## 当前前端可操作范围
 
@@ -15,6 +15,13 @@ Admin 已具备这些交互原型：
 - Analytics 趋势与分布分析台
 - Logs 搜索、Fallback 筛选与详情面板
 - Settings 系统配置与分发状态面板
+- Bootstrap 首次启动向导与初始化状态页
+- Bootstrap Success 首次启动完成页
+- Initialization Guard 未初始化拦截
+- Security 登录与默认安全基线页
+- Release portable 发布状态页
+- Version 版本信息页
+- Build Checks 构建检查项页
 - Quick Setup 工具接入说明
 
 ## 打包结构
@@ -59,12 +66,15 @@ npm run dev
 - 解压后可直接运行 `localgateway.exe`
 - 前端静态资源嵌入二进制
 - 首次启动自动创建 `config.yaml`、`data/`、`logs/`
+- 首次进入 Admin 时先经过初始化向导与管理员安全设置
+- 初始化完成后进入正式控制台
 - 用户无需 Node / Go 环境即可日常使用
 
 ## 后续要补的关键动作
 
 1. 编译并修正所有 Go 类型与依赖问题
 2. 完成真实 Provider 调用与 SSE 流式转发
-3. 将 Vite build 产物嵌入 Go
-4. 实现首次启动初始化向导
-5. 生成 Windows 可分发压缩包
+3. 接通 Bootstrap / Security / Release / Version / Build Checks 真实状态接口
+4. 将 Vite build 产物嵌入 Go
+5. 实现首次启动初始化向导的真实写盘逻辑
+6. 生成 Windows 可分发压缩包

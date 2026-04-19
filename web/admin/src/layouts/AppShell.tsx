@@ -1,17 +1,39 @@
 import { PropsWithChildren, useEffect } from "react";
-import { Activity, BarChart3, Cog, KeyRound, LayoutDashboard, Network, Rocket, ScrollText, Sparkles, SunMoon } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  Cog,
+  FileCheck2,
+  Hash,
+  KeyRound,
+  LayoutDashboard,
+  LockKeyhole,
+  Network,
+  PackageCheck,
+  Rocket,
+  ScrollText,
+  Sparkles,
+  SunMoon,
+  WandSparkles
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 import clsx from "clsx";
 import { useUIStore } from "../store/ui-store";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/bootstrap", label: "Bootstrap", icon: WandSparkles },
+  { to: "/bootstrap/success", label: "Bootstrap Done", icon: Activity },
+  { to: "/security", label: "Security", icon: LockKeyhole },
   { to: "/providers", label: "Providers", icon: Network },
   { to: "/keys", label: "Local Keys", icon: KeyRound },
   { to: "/routing", label: "Routing", icon: Sparkles },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/logs", label: "Logs", icon: ScrollText },
   { to: "/settings", label: "Settings", icon: Cog },
+  { to: "/release-status", label: "Release", icon: PackageCheck },
+  { to: "/version", label: "Version", icon: Hash },
+  { to: "/build-checks", label: "Build Checks", icon: FileCheck2 },
   { to: "/quick-setup", label: "Quick Setup", icon: Rocket }
 ];
 

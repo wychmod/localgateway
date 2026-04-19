@@ -8,20 +8,33 @@ import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LogsPage } from "./pages/LogsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { QuickSetupPage } from "./pages/QuickSetupPage";
+import { BootstrapPage } from "./pages/BootstrapPage";
+import { BootstrapSuccessPage } from "./pages/BootstrapSuccessPage";
+import { SecurityPage } from "./pages/SecurityPage";
+import { ReleaseStatusPage } from "./pages/ReleaseStatusPage";
+import { VersionInfoPage } from "./pages/VersionInfoPage";
+import { BuildChecksPage } from "./pages/BuildChecksPage";
+import { InitializationGuard } from "./components/InitializationGuard";
 
 export default function App() {
   return (
     <AppShell>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/providers" element={<ProvidersPage />} />
-        <Route path="/keys" element={<KeysPage />} />
-        <Route path="/routing" element={<RoutingPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/logs" element={<LogsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/quick-setup" element={<QuickSetupPage />} />
+        <Route path="/bootstrap" element={<BootstrapPage />} />
+        <Route path="/bootstrap/success" element={<BootstrapSuccessPage />} />
+        <Route path="/security" element={<SecurityPage />} />
+        <Route path="/release-status" element={<ReleaseStatusPage />} />
+        <Route path="/version" element={<VersionInfoPage />} />
+        <Route path="/build-checks" element={<BuildChecksPage />} />
+        <Route path="/dashboard" element={<InitializationGuard><DashboardPage /></InitializationGuard>} />
+        <Route path="/providers" element={<InitializationGuard><ProvidersPage /></InitializationGuard>} />
+        <Route path="/keys" element={<InitializationGuard><KeysPage /></InitializationGuard>} />
+        <Route path="/routing" element={<InitializationGuard><RoutingPage /></InitializationGuard>} />
+        <Route path="/analytics" element={<InitializationGuard><AnalyticsPage /></InitializationGuard>} />
+        <Route path="/logs" element={<InitializationGuard><LogsPage /></InitializationGuard>} />
+        <Route path="/settings" element={<InitializationGuard><SettingsPage /></InitializationGuard>} />
+        <Route path="/quick-setup" element={<InitializationGuard><QuickSetupPage /></InitializationGuard>} />
       </Routes>
     </AppShell>
   );

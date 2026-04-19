@@ -10,6 +10,7 @@
 - 后端提供完整 Admin API
 - 支持单目录分发（download-and-run）
 - Admin 采用高端 SaaS 控制台风格，而不是普通后台模板
+- 首次启动、登录安全、版本状态、构建检查与发布状态都要在 Admin 中可见、可操作、可理解
 
 ## 已完成
 
@@ -20,6 +21,7 @@
 - Local Key 管理服务：新增、编辑、吊销、轮换、续期
 - Routing 服务：规则 CRUD、模型别名、路由模拟测试
 - Settings 服务：系统设置保存、备份占位、分发方案输出
+- 新增 Bootstrap / Security / Release 模块占位服务
 - Admin API 路由骨架已扩展为前端全操作模式
 
 ### 前端后台
@@ -30,6 +32,13 @@
 - Providers / Keys / Routing / Settings / Quick Setup 页面升级为可操作工作台
 - Analytics 升级为可切换分析工作台
 - Logs 升级为检索 + 详情问题定位台
+- Bootstrap 页面：首次启动向导与初始化状态
+- Bootstrap Success 页面：首次启动完成页
+- Initialization Guard：未初始化拦截
+- Security 页面：登录与安全入口
+- Release 页面：portable 分发进度与发布待办清单
+- Version 页面：版本信息与当前产品状态
+- Build Checks 页面：构建检查项页
 
 ### Packaging / Distribution
 - 新增 `packaging/windows-portable/` 目录
@@ -46,6 +55,7 @@
 - 后端真实编译与运行验证
 - 真实 Provider 出站请求
 - SSE 流式转发
+- Bootstrap / Login / Release / Version / Build Checks 状态接口的真实联调
 - Admin 前端 build 产物嵌入 Go 二进制
 - 真正的单文件打包产物生成
 
@@ -66,43 +76,33 @@ localgateway/
 1. 解压
 2. 运行 `localgateway.exe`
 3. 浏览器打开 `http://127.0.0.1:9090/admin`
-4. 在前端完成 Provider、Key、Routing、Settings 的全部配置
+4. 先经过初始化向导与管理员安全设置
+5. 再在前端完成 Provider、Key、Routing、Settings 等配置
 
 ## 当前优先继续项
 
 当 Go 环境可用后，建议优先继续：
 
 1. 编译修正与依赖安装
-2. 真实 Admin API 联调
+2. 真实 Bootstrap / Security / Release / Version / Build Checks API 联调
 3. 真实 Provider 转发与 SSE 适配
 4. 前端构建与内嵌
 5. 生成 Windows 可分发包
 
 ## 快速查看重点文件
 
-### 后端
-- `cmd/localgateway/main.go`
-- `internal/app/app.go`
-- `internal/server/router.go`
-- `internal/server/providers.go`
-- `internal/server/keys.go`
-- `internal/server/routing.go`
-- `internal/server/settings.go`
-- `internal/provider/service.go`
-- `internal/auth/service.go`
-- `internal/routing/service.go`
-- `internal/settings/service.go`
+### 前端入口链路
+- `web/admin/src/App.tsx`
+- `web/admin/src/layouts/AppShell.tsx`
+- `web/admin/src/components/InitializationGuard.tsx`
 
-### 前端
-- `web/admin/src/pages/DashboardPage.tsx`
-- `web/admin/src/pages/ProvidersPage.tsx`
-- `web/admin/src/pages/KeysPage.tsx`
-- `web/admin/src/pages/RoutingPage.tsx`
-- `web/admin/src/pages/AnalyticsPage.tsx`
-- `web/admin/src/pages/LogsPage.tsx`
-- `web/admin/src/pages/SettingsPage.tsx`
-- `web/admin/src/pages/QuickSetupPage.tsx`
-- `web/admin/src/styles/global.css`
+### 新增页面
+- `web/admin/src/pages/BootstrapPage.tsx`
+- `web/admin/src/pages/BootstrapSuccessPage.tsx`
+- `web/admin/src/pages/SecurityPage.tsx`
+- `web/admin/src/pages/ReleaseStatusPage.tsx`
+- `web/admin/src/pages/VersionInfoPage.tsx`
+- `web/admin/src/pages/BuildChecksPage.tsx`
 
 ### 分发
 - `packaging/windows-portable/SPEC.md`

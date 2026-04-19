@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -16,6 +17,8 @@ import (
 	"localgateway/internal/routing"
 	"localgateway/internal/settings"
 	"localgateway/internal/usage"
+
+	"localgateway/build/embed"
 )
 
 type Dependencies struct {
@@ -90,6 +93,13 @@ func (r *Router) mount() {
 		adminRouter.Post("/settings/backup", r.handleBackupSettings)
 		adminRouter.Get("/distribution", r.handleDistributionPlan)
 	})
+
+	// Serve embedded admin UI on /admin with SPA fallback.
+	// API routes (/admin/api/*) are registered above and take priority over this static handler.
+	r.mux.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/", http.StatusMovedPermanently)
+	})
+	r.mux.MethodFunc("GET", "/admin/*", r.serveAdminUI)
 }
 
 func (r *Router) handleHealth(w http.ResponseWriter, req *http.Request) {
@@ -103,4 +113,46 @@ func respondJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+// serveAdminUI serves embedded admin UI with SPA fallback.
+// For non-file requests (like /admin/providers), it serves index.html
+// so client-side React Router can handle the route.
+func (r *Router) serveAdminUI(w http.ResponseWriter, req *http.Request) {
+	// Strip /admin prefix from path
+	path := chi.URLParam(req, "*")
+	if path == "" {
+		path = "/"
+	}
+
+	// Try to open the file from embed FS
+	f, err := embed.AdminFS().Open(path)
+	if err != nil {
+		// File not found — serve index.html for SPA routing
+		r.serveAdminIndex(w)
+		return
+	}
+	defer f.Close()
+
+	stat, err := f.Stat()
+	if err != nil || stat.IsDir() {
+		r.serveAdminIndex(w)
+		return
+	}
+
+	http.ServeContent(w, req, stat.Name(), stat.ModTime(), f)
+}
+
+// serveAdminIndex serves the index.html from the embedded admin assets.
+func (r *Router) serveAdminIndex(w http.ResponseWriter) {
+	f, err := embed.AdminFS().Open("/index.html")
+	if err != nil {
+		http.Error(w, "admin UI not available", http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+
+	stat, _ := f.Stat()
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	http.ServeContent(w, &http.Request{URL: &url.URL{Path: "/admin/index.html"}}, "index.html", stat.ModTime(), f)
 }

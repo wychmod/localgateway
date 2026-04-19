@@ -1,8 +1,22 @@
 package embed
 
-// This package will host embedded admin assets after the frontend build is available.
-// Planned flow:
-// 1. Build web/admin with Vite
-// 2. Copy dist assets into build/embed/admin
-// 3. Embed via Go 1.22 embed FS
-// 4. Serve /admin directly from the binary
+import (
+	"embed"
+	"io/fs"
+	"net/http"
+)
+
+//go:embed admin/*
+var adminFS embed.FS
+
+// AdminFS returns the embedded admin frontend files as an http.FileSystem.
+func AdminFS() http.FileSystem {
+	sub, _ := fs.Sub(adminFS, "admin")
+	return http.FS(sub)
+}
+
+// AdminFileServer returns an http.Handler that serves the embedded admin frontend.
+func AdminFileServer() http.Handler {
+	sub, _ := fs.Sub(adminFS, "admin")
+	return http.FileServer(http.FS(sub))
+}

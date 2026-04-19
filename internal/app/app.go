@@ -31,7 +31,17 @@ type Application struct {
 }
 
 func New() (*Application, error) {
-	cfg, err := config.Load("configs/config.example.yaml")
+	// Resolve config path: explicit LG_CONFIG env var > config.yaml in cwd > default example
+	cfgPath := os.Getenv("LG_CONFIG")
+	if cfgPath == "" {
+		if _, err := os.Stat("config.yaml"); err == nil {
+			cfgPath = "config.yaml"
+		} else {
+			cfgPath = "configs/config.example.yaml"
+		}
+	}
+
+	cfg, err := config.Load(cfgPath)
 	if err != nil {
 		return nil, err
 	}
