@@ -1,0 +1,38 @@
+package storage
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+
+	"localgateway/internal/config"
+	"localgateway/internal/models"
+)
+
+func OpenDatabase(cfg config.DatabaseConfig) (*gorm.DB, error) {
+	if err := os.MkdirAll(filepath.Dir(cfg.Path), 0o755); err != nil {
+		return nil, fmt.Errorf("create database dir: %w", err)
+	}
+
+	db, err := gorm.Open(sqlite.Open(cfg.Path), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("open sqlite: %w", err)
+	}
+
+	if err := db.AutoMigrate(
+		&models.Provider{},
+		&models.LocalKey{},
+		&models.RoutingRule{},
+		&models.ModelAlias{},
+		&models.Setting{},
+		&models.UsageRecord{},
+		&models.RequestLog{},
+	); err != nil {
+		return nil, fmt.Errorf("auto migrate: %w", err)
+	}
+
+	return db, nil
+}
