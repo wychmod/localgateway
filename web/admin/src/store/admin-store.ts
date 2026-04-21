@@ -3,12 +3,14 @@ import {
   LocalKeyRecord,
   ProviderRecord,
   RoutingRuleRecord,
-  SettingsRecord,
-  localKeyRecords,
-  providerRecords,
-  routingRuleRecords,
-  settingsRecord
+  SettingsRecord
 } from "./entities";
+import {
+  localKeyRecordsLocalized,
+  providerRecordsLocalized,
+  routingRuleRecordsLocalized,
+  settingsRecordLocalized
+} from "./localized-data";
 
 type NoticeTone = "success" | "warning" | "info";
 
@@ -38,18 +40,18 @@ type AdminState = {
 };
 
 export const useAdminStore = create<AdminState>((set) => ({
-  providers: providerRecords,
-  keys: localKeyRecords,
-  rules: routingRuleRecords,
-  settings: settingsRecord,
-  selectedProviderId: providerRecords[0]?.id,
-  selectedKeyId: localKeyRecords[0]?.id,
+  providers: providerRecordsLocalized,
+  keys: localKeyRecordsLocalized,
+  rules: routingRuleRecordsLocalized,
+  settings: settingsRecordLocalized,
+  selectedProviderId: providerRecordsLocalized[0]?.id,
+  selectedKeyId: localKeyRecordsLocalized[0]?.id,
   notices: [
     {
       id: 1,
       tone: "info",
-      title: "欢迎来到 LocalGateway Admin",
-      message: "当前界面基于本地 mock 数据运行，适合先打磨配置流、状态流与交互细节。"
+      title: "欢迎使用 LocalGateway 管理后台",
+      message: "当前界面基于本地演示数据运行，适合先打磨配置流、状态流与交互细节。"
     }
   ],
   setSelectedProvider: (id) => set({ selectedProviderId: id }),
@@ -60,7 +62,7 @@ export const useAdminStore = create<AdminState>((set) => ({
       selectedProviderId: record.id,
       notices: prependNotice(state.notices, {
         tone: "success",
-        title: "Provider 已保存",
+        title: "厂商配置已保存",
         message: `${record.name} 的接入配置已更新，后续可以继续做连接测试与模型发现。`
       })
     })),
@@ -70,8 +72,8 @@ export const useAdminStore = create<AdminState>((set) => ({
       selectedKeyId: record.id,
       notices: prependNotice(state.notices, {
         tone: "success",
-        title: "Local Key 已更新",
-        message: `${record.name} 的预算、模型权限和 Provider 约束已保存。`
+        title: "本地密钥已更新",
+        message: `${record.name} 的预算、模型权限和厂商约束已保存。`
       })
     })),
   saveRule: (record) =>
@@ -89,7 +91,7 @@ export const useAdminStore = create<AdminState>((set) => ({
       notices: prependNotice(state.notices, {
         tone: "success",
         title: "系统设置已保存",
-        message: `服务监听 ${record.host}:${record.port}，Admin 路径保持为 ${record.adminPath}。`
+        message: `服务监听 ${record.host}:${record.port}，管理后台路径保持为 ${record.adminPath}。`
       })
     })),
   pushNotice: (notice) =>

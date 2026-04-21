@@ -28,25 +28,25 @@ import { useUIStore } from "../store/ui-store";
 import { useAdminStore } from "../store/admin-store";
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, description: "总览运行态、成本和告警" },
-  { to: "/bootstrap", label: "Bootstrap", icon: WandSparkles, description: "首次初始化与引导流程" },
-  { to: "/bootstrap/success", label: "Bootstrap Done", icon: Activity, description: "初始化完成后的确认页面" },
-  { to: "/security", label: "Security", icon: LockKeyhole, description: "安全基线与检查项" },
-  { to: "/providers", label: "Providers", icon: Network, description: "管理厂商接入与模型发现" },
-  { to: "/keys", label: "Local Keys", icon: KeyRound, description: "本地 Key、预算和权限" },
-  { to: "/routing", label: "Routing", icon: Sparkles, description: "规则链路、Fallback 与模拟" },
-  { to: "/analytics", label: "Analytics", icon: BarChart3, description: "成本、请求与 Token 分析" },
-  { to: "/logs", label: "Logs", icon: ScrollText, description: "日志检索、异常与调用细节" },
-  { to: "/settings", label: "Settings", icon: Cog, description: "系统设置与分发参数" },
-  { to: "/release-status", label: "Release", icon: PackageCheck, description: "发布态与打包检查" },
-  { to: "/version", label: "Version", icon: Hash, description: "版本信息与依赖状态" },
-  { to: "/build-checks", label: "Build Checks", icon: FileCheck2, description: "构建前检查项总览" },
-  { to: "/quick-setup", label: "Quick Setup", icon: Rocket, description: "为工具生成接入配置" }
+  { to: "/dashboard", label: "总览首页", icon: LayoutDashboard, description: "查看系统运行、费用和告警" },
+  { to: "/bootstrap", label: "首次配置", icon: WandSparkles, description: "完成首次启动与初始化引导" },
+  { to: "/bootstrap/success", label: "初始化完成", icon: Activity, description: "查看初始化完成后的状态" },
+  { to: "/security", label: "安全设置", icon: LockKeyhole, description: "设置登录与安全基线" },
+  { to: "/providers", label: "厂商接入", icon: Network, description: "管理模型厂商与接入地址" },
+  { to: "/keys", label: "本地密钥", icon: KeyRound, description: "管理密钥、预算和权限" },
+  { to: "/routing", label: "路由策略", icon: Sparkles, description: "配置分发规则与备用链路" },
+  { to: "/analytics", label: "数据分析", icon: BarChart3, description: "查看费用、请求和用量趋势" },
+  { to: "/logs", label: "运行日志", icon: ScrollText, description: "检索日志与异常详情" },
+  { to: "/settings", label: "系统设置", icon: Cog, description: "调整系统参数与分发方式" },
+  { to: "/release-status", label: "发布状态", icon: PackageCheck, description: "查看打包与发布准备情况" },
+  { to: "/version", label: "版本信息", icon: Hash, description: "查看当前版本与状态说明" },
+  { to: "/build-checks", label: "构建检查", icon: FileCheck2, description: "核对发布前的关键检查项" },
+  { to: "/quick-setup", label: "快速接入", icon: Rocket, description: "为常用工具生成接入配置" }
 ];
 
 const themeMeta = {
-  light: { label: "亮色", icon: Sun },
-  dark: { label: "暗色", icon: Moon },
+  light: { label: "浅色模式", icon: Sun },
+  dark: { label: "深色模式", icon: Moon },
   system: { label: "跟随系统", icon: SunMoon }
 } as const;
 
@@ -93,7 +93,7 @@ export function AppShell({ children }: PropsWithChildren) {
               <Activity size={18} />
               <span>LocalGateway</span>
             </div>
-            <p className="brand-subtitle">Premium AI Gateway Control</p>
+            <p className="brand-subtitle">本地 AI 网关控制台</p>
           </div>
 
           <button type="button" className="ghost-button compact sidebar-close" onClick={() => setSidebarOpen(false)}>
@@ -104,17 +104,17 @@ export function AppShell({ children }: PropsWithChildren) {
 
         <div className="workspace-card luxury-panel nested-panel">
           <div>
-            <span className="eyebrow">Workspace Signal</span>
-            <strong>当前工作区状态稳定</strong>
+            <span className="eyebrow">当前工作区状态</span>
+            <strong>系统状态整体稳定</strong>
           </div>
           <div className="workspace-metrics">
             <div>
-              <span>Healthy Providers</span>
+              <span>可用厂商</span>
               <strong>{healthyProviders}/{providers.length}</strong>
             </div>
             <div>
-              <span>Primary Key</span>
-              <strong>{activeKey?.name ?? "未配置"}</strong>
+              <span>主用密钥</span>
+              <strong>{activeKey?.name ?? "尚未配置"}</strong>
             </div>
           </div>
         </div>
@@ -143,8 +143,8 @@ export function AppShell({ children }: PropsWithChildren) {
 
         <div className="theme-switcher luxury-panel nested-panel">
           <div>
-            <div className="theme-title">Theme</div>
-            <div className="theme-subtitle">亮 / 暗 / 跟随系统</div>
+            <div className="theme-title">界面主题</div>
+            <div className="theme-subtitle">浅色 / 深色 / 跟随系统</div>
           </div>
           <div className="theme-buttons">
             {(["light", "dark", "system"] as const).map((item) => {
@@ -173,8 +173,8 @@ export function AppShell({ children }: PropsWithChildren) {
               导航
             </button>
             <div>
-              <span className="eyebrow">{currentPage?.label ?? "Mission Control"}</span>
-              <h1>{currentPage?.description ?? "高端本地 AI 网关管理后台"}</h1>
+              <span className="eyebrow">{currentPage?.label ?? "系统总览"}</span>
+              <h1>{currentPage?.description ?? "本地 AI 网关管理后台"}</h1>
             </div>
           </div>
           <div className="topbar-actions">
@@ -186,8 +186,8 @@ export function AppShell({ children }: PropsWithChildren) {
               <Bell size={16} />
               通知 {notices.length}
             </button>
-            <button type="button" className="ghost-button" onClick={() => navigate("/quick-setup")}>Quick Setup</button>
-            <button type="button" className="primary-button" onClick={() => navigate("/keys")}>Create Local Key</button>
+            <button type="button" className="ghost-button" onClick={() => navigate("/quick-setup")}>快速接入</button>
+            <button type="button" className="primary-button" onClick={() => navigate("/keys")}>新建本地密钥</button>
           </div>
         </header>
 

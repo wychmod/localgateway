@@ -188,6 +188,13 @@ cd D:\idea\localgateway\build\portable\LocalGateway
 
 这一种最接近最终用户的真实使用方式。
 
+默认情况下，程序启动成功后会自动打开：
+
+- `http://127.0.0.1:18743/admin`
+
+在 Windows 下会优先尝试使用 **Chrome** 打开管理页面；如果本机未安装 Chrome，则会回退到系统默认浏览器。
+
+
 ---
 
 ## 如何使用

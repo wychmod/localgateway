@@ -6,8 +6,8 @@ export function DashboardPage() {
     <div className="page-grid dashboard-grid enhanced-dashboard">
       <section className="hero-panel luxury-panel dashboard-hero">
         <div>
-          <span className="eyebrow">Mission Control</span>
-          <h2>把网关配置、运行态、分发态都压进一个中控首页</h2>
+          <span className="eyebrow">系统总览</span>
+          <h2>把网关配置、运行态、分发态都压进一个总控首页</h2>
           <p>
             这里不只是看数字，而是直接发起关键操作、查看告警、确认健康状态，
             同时追踪便携分发版本是否已经具备下载即用条件。
@@ -36,10 +36,10 @@ export function DashboardPage() {
       <section className="luxury-panel chart-panel">
         <div className="panel-heading">
           <div>
-            <span className="eyebrow">Cost Intelligence</span>
-            <h3>7 日费用、请求与 Token 走势</h3>
+            <span className="eyebrow">费用分析</span>
+            <h3>近 7 日费用、请求与用量趋势</h3>
           </div>
-          <button type="button" className="ghost-button">Export Snapshot</button>
+          <button type="button" className="ghost-button">导出快照</button>
         </div>
         <div className="chart-wrap">
           <ResponsiveContainer width="100%" height="100%">
@@ -62,8 +62,8 @@ export function DashboardPage() {
       <section className="luxury-panel dashboard-side-panel alert-panel">
         <div className="panel-heading compact-heading">
           <div>
-            <span className="eyebrow">Alerts</span>
-            <h3>风险与提示</h3>
+            <span className="eyebrow">风险提醒</span>
+            <h3>当前告警与提示</h3>
           </div>
         </div>
         <div className="stack-list">
@@ -79,17 +79,17 @@ export function DashboardPage() {
       <section className="luxury-panel providers-panel">
         <div className="panel-heading">
           <div>
-            <span className="eyebrow">Provider Health</span>
+            <span className="eyebrow">厂商健康度</span>
             <h3>线路状态与流量占比</h3>
           </div>
-          <button type="button" className="ghost-button">Open Live View</button>
+          <button type="button" className="ghost-button">打开实时视图</button>
         </div>
         <div className="provider-list">
           {providerHealth.map((item) => (
             <article key={item.name} className="provider-row">
               <div>
                 <strong>{item.name}</strong>
-                <span>{item.latency} ms · 流量占比 {item.share}%</span>
+                <span>{item.latency} 毫秒 · 流量占比 {item.share}%</span>
               </div>
               <span className={`status-pill ${item.status}`}>{item.status}</span>
             </article>
@@ -100,22 +100,22 @@ export function DashboardPage() {
       <section className="luxury-panel dashboard-side-panel distribution-card-panel">
         <div className="panel-heading compact-heading">
           <div>
-            <span className="eyebrow">Distribution</span>
-            <h3>下载即用状态</h3>
+            <span className="eyebrow">分发状态</span>
+            <h3>下载即用准备情况</h3>
           </div>
         </div>
         <div className="distribution-stack">
-          <div className="metric-pill">Artifact: {distributionStatus.artifact}</div>
-          <div className="metric-pill">Mode: {distributionStatus.mode}</div>
-          <div className="metric-pill">Bundle: {distributionStatus.bundle}</div>
-          <div className="metric-pill">Init: {distributionStatus.init}</div>
+          <div className="metric-pill">分发包：{distributionStatus.artifact}</div>
+          <div className="metric-pill">分发方式：{distributionStatus.mode}</div>
+          <div className="metric-pill">打包说明：{distributionStatus.bundle}</div>
+          <div className="metric-pill">初始化：{distributionStatus.init}</div>
         </div>
       </section>
 
       <section className="luxury-panel live-flow-panel">
         <div className="panel-heading compact-heading">
           <div>
-            <span className="eyebrow">Live Flow</span>
+            <span className="eyebrow">实时请求</span>
             <h3>当前请求流</h3>
           </div>
         </div>

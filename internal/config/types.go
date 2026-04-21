@@ -10,14 +10,17 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host         string          `mapstructure:"host"`
-	Port         int             `mapstructure:"port"`
-	AdminPath    string          `mapstructure:"admin_path"`
-	ReadTimeout  int             `mapstructure:"read_timeout"`
-	WriteTimeout int             `mapstructure:"write_timeout"`
-	IdleTimeout  int             `mapstructure:"idle_timeout"`
-	AdminAuth    AdminAuthConfig `mapstructure:"admin_auth"`
+	Host           string          `mapstructure:"host"`
+	Port           int             `mapstructure:"port"`
+	AdminPath      string          `mapstructure:"admin_path"`
+	AutoOpenAdmin  bool            `mapstructure:"auto_open_admin"`
+	PreferBrowser  string          `mapstructure:"prefer_browser"`
+	ReadTimeout    int             `mapstructure:"read_timeout"`
+	WriteTimeout   int             `mapstructure:"write_timeout"`
+	IdleTimeout    int             `mapstructure:"idle_timeout"`
+	AdminAuth      AdminAuthConfig `mapstructure:"admin_auth"`
 }
+
 
 type AdminAuthConfig struct {
 	Enabled  bool   `mapstructure:"enabled"`

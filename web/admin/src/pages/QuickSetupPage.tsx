@@ -16,7 +16,7 @@ export function QuickSetupPage() {
       snippet: `{"apiUrl": "http://localhost:9090", "apiKey": "${currentKey.displayKey}"}`
     },
     {
-      name: "Portable Distribution",
+      name: "便携版分发包",
       snippet: "下载 localgateway.zip → 解压 → 运行 localgateway.exe → 打开 /admin 完成剩余配置"
     }
   ];
@@ -24,7 +24,7 @@ export function QuickSetupPage() {
   return (
     <section className="luxury-panel page-panel">
       <SectionHeader
-        eyebrow="Quick Setup"
+        eyebrow="快速接入"
         title="下载后直接用，配置也尽量别让人费劲"
         description="面向 Codex、Claude Desktop、Cursor 等工具生成一键接入说明。"
         actions={
@@ -35,19 +35,19 @@ export function QuickSetupPage() {
               pushNotice({
                 tone: "success",
                 title: "配置校验通过",
-                message: "当前示例以本地网关地址和首个 Local Key 生成，适合作为接入模板。"
+                message: "当前示例以本地网关地址和首个本地密钥生成，适合作为接入模板。"
               })
             }
           >
-            <CheckCheck size={16} /> Validate Config
+            <CheckCheck size={16} /> 校验配置
           </button>
         }
       />
 
       <div className="context-strip">
-        <div className="metric-pill">Preset {setups.length}</div>
-        <div className="metric-pill">Primary Key {currentKey.name}</div>
-        <div className="metric-pill">Gateway http://localhost:9090/v1</div>
+        <div className="metric-pill">预设方案 {setups.length}</div>
+        <div className="metric-pill">主用密钥 {currentKey.name}</div>
+        <div className="metric-pill">网关地址 http://localhost:9090/v1</div>
       </div>
 
       <div className="setup-grid">
@@ -69,7 +69,7 @@ export function QuickSetupPage() {
                   })
                 }
               >
-                <Copy size={14} /> Copy
+                <Copy size={14} /> 复制配置
               </button>
             </div>
             <pre>{item.snippet}</pre>
@@ -84,12 +84,12 @@ export function QuickSetupPage() {
           onClick={() =>
             pushNotice({
               tone: "info",
-              title: "Setup Wizard 已预留",
-              message: "后续可以把工具类型、Key 选择和配置导出整合成真正的一步式向导。"
+              title: "接入向导已预留",
+              message: "后续可以把工具类型、密钥选择和配置导出整合成真正的一步式向导。"
             })
           }
         >
-          <TerminalSquare size={16} /> Open Setup Wizard
+          <TerminalSquare size={16} /> 打开接入向导
         </button>
       </div>
     </section>

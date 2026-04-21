@@ -33,6 +33,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.host", "127.0.0.1")
 	v.SetDefault("server.port", 18743)
 	v.SetDefault("server.admin_path", "/admin")
+	v.SetDefault("server.auto_open_admin", true)
+	v.SetDefault("server.prefer_browser", "chrome")
 	v.SetDefault("server.read_timeout", 15)
 	v.SetDefault("server.write_timeout", 120)
 	v.SetDefault("server.idle_timeout", 120)
@@ -44,3 +46,4 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("database.path", "./data/localgateway.db")
 	v.SetDefault("routing.default_strategy", "priority")
 }
+

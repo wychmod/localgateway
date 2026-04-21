@@ -2,6 +2,8 @@ server:
   host: "127.0.0.1"
   port: 18743
   admin_path: "/admin"
+  auto_open_admin: true
+  prefer_browser: "chrome"
   read_timeout: 15
   write_timeout: 120
   idle_timeout: 120
@@ -9,6 +11,7 @@ server:
     enabled: true
     username: "admin"
     password: "ChangeMeNow!"
+
 
 proxy:
   request_timeout: 120

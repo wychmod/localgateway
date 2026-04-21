@@ -45,8 +45,12 @@ coverage/
 /localgateway.exe
 
 # WorkBuddy local state
+/.workbuddy/
 /.workbuddy/memory/
 /.workbuddy/teams/
+
+# Local troubleshooting notes / agent scratchpad
+/.learnings/
 
 # Explicitly track repository sources that may be shadowed by broad rules
 !/web/admin/package-lock.json

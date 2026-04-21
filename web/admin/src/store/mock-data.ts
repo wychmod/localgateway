@@ -12,13 +12,13 @@ export const statCards = [
     tone: "emerald"
   },
   {
-    title: "平均 TTFT",
+    title: "平均首字返回时间",
     value: "218ms",
     delta: "-14ms",
     tone: "sky"
   },
   {
-    title: "可用 Provider",
+    title: "可用厂商",
     value: "08",
     delta: "+2",
     tone: "amber"
@@ -26,45 +26,45 @@ export const statCards = [
 ];
 
 export const providerHealth = [
-  { name: "OpenAI Primary", latency: 182, status: "healthy", share: 38 },
-  { name: "Claude Premium", latency: 246, status: "healthy", share: 26 },
-  { name: "DeepSeek Saver", latency: 128, status: "healthy", share: 21 },
-  { name: "Azure Backup", latency: 311, status: "warning", share: 15 }
+  { name: "OpenAI 主线路", latency: 182, status: "healthy", share: 38 },
+  { name: "Claude 高级线路", latency: 246, status: "healthy", share: 26 },
+  { name: "DeepSeek 节省线路", latency: 128, status: "healthy", share: 21 },
+  { name: "Azure 备用线路", latency: 311, status: "warning", share: 15 }
 ];
 
 export const costTrend = [
-  { day: "Mon", cost: 132, requests: 1840, tokens: 420000 },
-  { day: "Tue", cost: 148, requests: 2030, tokens: 458000 },
-  { day: "Wed", cost: 141, requests: 1964, tokens: 436000 },
-  { day: "Thu", cost: 169, requests: 2210, tokens: 492000 },
-  { day: "Fri", cost: 188, requests: 2450, tokens: 538000 },
-  { day: "Sat", cost: 124, requests: 1630, tokens: 362000 },
-  { day: "Sun", cost: 117, requests: 1520, tokens: 349000 }
+  { day: "周一", cost: 132, requests: 1840, tokens: 420000 },
+  { day: "周二", cost: 148, requests: 2030, tokens: 458000 },
+  { day: "周三", cost: 141, requests: 1964, tokens: 436000 },
+  { day: "周四", cost: 169, requests: 2210, tokens: 492000 },
+  { day: "周五", cost: 188, requests: 2450, tokens: 538000 },
+  { day: "周六", cost: 124, requests: 1630, tokens: 362000 },
+  { day: "周日", cost: 117, requests: 1520, tokens: 349000 }
 ];
 
 export const alertFeed = [
-  { level: "warning", title: "Claude Premium 延迟升高", description: "最近 5 分钟 TTFT 超过 320ms，已触发备用链路观察。" },
-  { level: "info", title: "Cursor Team 预算达到 35%", description: "月度使用趋势正常，无需限流。" },
-  { level: "critical", title: "Azure Backup 最近 1 小时 fallback 次数增加", description: "建议检查 OpenAI Primary 出站稳定性。" }
+  { level: "warning", title: "Claude 高级线路延迟升高", description: "最近 5 分钟首字返回时间超过 320ms，已触发备用链路观察。" },
+  { level: "info", title: "Cursor 团队密钥预算达到 35%", description: "月度使用趋势正常，无需限流。" },
+  { level: "critical", title: "Azure 备用线路最近 1 小时切换次数增加", description: "建议检查 OpenAI 主线路出站稳定性。" }
 ];
 
 export const quickActions = [
-  "Add Provider",
-  "Create Local Key",
-  "Run Routing Test",
-  "Open Portable Packaging",
-  "Review Failed Logs"
+  "新增厂商",
+  "新建本地密钥",
+  "执行路由测试",
+  "打开便携版打包",
+  "查看失败日志"
 ];
 
 export const distributionStatus = {
   artifact: "localgateway.zip",
-  mode: "Portable / Download-and-Run",
-  bundle: "Admin 前端将内嵌进入单二进制",
+  mode: "便携版 / 下载即用",
+  bundle: "管理后台前端将内嵌进入单个二进制",
   init: "首次启动自动初始化 config、data、logs"
 };
 
 export const liveRequests = [
-  { tool: "Codex", model: "gpt-4o", provider: "OpenAI Primary", latency: "182ms", status: "streaming" },
-  { tool: "Claude Desktop", model: "claude-sonnet-4", provider: "Claude Premium", latency: "246ms", status: "ok" },
-  { tool: "Cursor", model: "gpt-4o-mini", provider: "DeepSeek Saver", latency: "128ms", status: "ok" }
+  { tool: "Codex", model: "gpt-4o", provider: "OpenAI 主线路", latency: "182ms", status: "流式返回中" },
+  { tool: "Claude Desktop", model: "claude-sonnet-4", provider: "Claude 高级线路", latency: "246ms", status: "正常" },
+  { tool: "Cursor", model: "gpt-4o-mini", provider: "DeepSeek 节省线路", latency: "128ms", status: "正常" }
 ];
