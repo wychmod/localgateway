@@ -1,5 +1,6 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { alertFeed, costTrend, distributionStatus, liveRequests, providerHealth, quickActions, statCards } from "../store/mock-data";
+import { providerStatusMap } from "../store/labels";
 
 export function DashboardPage() {
   return (
@@ -7,10 +8,10 @@ export function DashboardPage() {
       <section className="hero-panel luxury-panel dashboard-hero">
         <div>
           <span className="eyebrow">系统总览</span>
-          <h2>把网关配置、运行态、分发态都压进一个总控首页</h2>
+          <h2>网关配置 · 运行状态 · 分发进度</h2>
           <p>
-            这里不只是看数字，而是直接发起关键操作、查看告警、确认健康状态，
-            同时追踪便携分发版本是否已经具备下载即用条件。
+            直接发起关键操作、查看告警、确认健康状态，
+            同时追踪便携分发版本是否已具备下载即用条件。
           </p>
           <div className="inline-actions hero-actions">
             {quickActions.map((action) => (
@@ -37,7 +38,7 @@ export function DashboardPage() {
         <div className="panel-heading">
           <div>
             <span className="eyebrow">费用分析</span>
-            <h3>近 7 日费用、请求与用量趋势</h3>
+            <h3>近 7 日费用与用量趋势</h3>
           </div>
           <button type="button" className="ghost-button">导出快照</button>
         </div>
@@ -89,9 +90,9 @@ export function DashboardPage() {
             <article key={item.name} className="provider-row">
               <div>
                 <strong>{item.name}</strong>
-                <span>{item.latency} 毫秒 · 流量占比 {item.share}%</span>
+                <span>延迟 {item.latency} 毫秒 · 流量占比 {item.share}%</span>
               </div>
-              <span className={`status-pill ${item.status}`}>{item.status}</span>
+              <span className={`status-pill ${item.status}`}>{providerStatusMap[item.status] ?? item.status}</span>
             </article>
           ))}
         </div>

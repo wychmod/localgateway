@@ -3,10 +3,10 @@ import { AlertTriangle, Search } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 
 const logs = [
-  { id: "log-1", time: "12:01:08", path: "/v1/chat/completions", provider: "OpenAI 主线路", latency: "184ms", status: "成功", detail: "Codex 正常流式返回" },
-  { id: "log-2", time: "12:02:14", path: "/v1/messages", provider: "Claude 高级线路", latency: "246ms", status: "成功", detail: "Claude Desktop 正常完成" },
-  { id: "log-3", time: "12:03:50", path: "/v1/chat/completions", provider: "Azure 备用线路", latency: "528ms", status: "已切换备用", detail: "OpenAI 主线路超时，已自动切到 Azure 备用线路" },
-  { id: "log-4", time: "12:05:19", path: "/v1/models", provider: "网关服务", latency: "32ms", status: "成功", detail: "模型列表刷新" }
+  { id: "log-1", time: "12:01:08", path: "/v1/chat/completions", provider: "OpenAI 主线路", latency: "184 毫秒", status: "成功", detail: "Codex 正常流式返回" },
+  { id: "log-2", time: "12:02:14", path: "/v1/messages", provider: "Claude 高级线路", latency: "246 毫秒", status: "成功", detail: "Claude Desktop 正常完成" },
+  { id: "log-3", time: "12:03:50", path: "/v1/chat/completions", provider: "Azure 备用线路", latency: "528 毫秒", status: "已切换备用", detail: "OpenAI 主线路超时，已自动切到 Azure 备用线路" },
+  { id: "log-4", time: "12:05:19", path: "/v1/models", provider: "网关服务", latency: "32 毫秒", status: "成功", detail: "模型列表刷新" }
 ];
 
 export function LogsPage() {
@@ -30,8 +30,8 @@ export function LogsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="运行日志"
-          title="异常流、备用切换和请求详情都能一把抓"
-          description="这页不只是看流水，还要帮你定位问题。"
+          title="异常流 · 备用切换 · 请求详情"
+          description="不只是看流水，还要帮你定位问题。"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${onlyFallback ? "active-chip" : ""}`} onClick={() => setOnlyFallback((value) => !value)}>
@@ -69,13 +69,13 @@ export function LogsPage() {
         ) : (
           <article className="luxury-panel nested-panel empty-state-card">
             <strong>没有匹配到日志</strong>
-            <p>换个关键词，或者取消“只看备用切换”筛选试试。</p>
+            <p>换个关键词，或者取消「只看备用切换」筛选试试。</p>
           </article>
         )}
       </article>
 
       <article className="luxury-panel page-panel detail-panel">
-        <SectionHeader eyebrow="日志详情" title={active?.path ?? "暂无结果"} description="请求详情、问题原因与相关链路都在右侧展开。" />
+        <SectionHeader eyebrow="日志详情" title={active?.path ?? "暂无结果"} description="请求详情、问题原因与相关链路。" />
         {active ? (
           <div className="detail-stack">
             <div className="metric-pill">时间：{active.time}</div>
@@ -88,12 +88,12 @@ export function LogsPage() {
             </article>
             <article className="luxury-panel nested-panel detail-card">
               <strong>调用链路</strong>
-              <p>主链路 → 重试 → 备用切换 路径已在这里预留，后续联调后会展示真实调用栈。</p>
+              <p>主链路 → 重试 → 备用切换路径已预留，后续联调后会展示真实调用栈。</p>
             </article>
           </div>
         ) : (
           <article className="luxury-panel nested-panel empty-state-card">
-            <strong>右侧暂无详情</strong>
+            <strong>暂无详情</strong>
             <p>先在左边选一条日志，或者放宽筛选条件。</p>
           </article>
         )}

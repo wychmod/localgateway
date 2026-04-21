@@ -11,11 +11,16 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/getlantern/systray"
+
 	"localgateway/internal/app"
 )
+
+const trayTooltip = "LocalGateway 本地 AI 网关"
 
 func main() {
 	application, err := app.New()
@@ -30,6 +35,33 @@ func main() {
 		ReadTimeout:  time.Duration(application.Config.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(application.Config.Server.WriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(application.Config.Server.IdleTimeout) * time.Second,
+	}
+
+	adminURL := buildAdminURL(application.Config.Server.Host, application.Config.Server.Port, application.Config.Server.AdminPath)
+
+	// Windows 正式模式：单实例检查，防止重复启动
+	if shouldRunInTray() {
+		mutexHandle, ok := acquireInstanceLock()
+		if !ok {
+			application.Logger.Info().Msg("检测到已有实例在运行，正在唤起管理后台")
+			if err := waitForServer(server.Addr, 5*time.Second); err == nil {
+				if err := openAdminPage(adminURL, application.Config.Server.PreferBrowser); err != nil {
+					application.Logger.Warn().Err(err).Msg("唤起管理后台失败")
+				}
+				return
+			}
+			application.Logger.Warn().Msg("单实例锁残留，继续启动新实例")
+		} else {
+			defer releaseInstanceLock(mutexHandle)
+		}
+	}
+
+	shutdown := make(chan struct{})
+	var shutdownOnce sync.Once
+	requestShutdown := func() {
+		shutdownOnce.Do(func() {
+			close(shutdown)
+		})
 	}
 
 	go func() {
@@ -47,16 +79,20 @@ func main() {
 				return
 			}
 
-			adminURL := buildAdminURL(application.Config.Server.Host, application.Config.Server.Port, application.Config.Server.AdminPath)
 			if err := openAdminPage(adminURL, application.Config.Server.PreferBrowser); err != nil {
 				application.Logger.Warn().Err(err).Str("url", adminURL).Msg("failed to auto-open admin page")
 			}
 		}()
 	}
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	if shouldRunInTray() {
+		go watchSignals(requestShutdown)
+		runTray(adminURL, requestShutdown)
+	} else {
+		watchSignalsBlocking(requestShutdown)
+	}
+
+	<-shutdown
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -64,6 +100,82 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		application.Logger.Error().Err(err).Msg("graceful shutdown failed")
 	}
+}
+
+func shouldRunInTray() bool {
+	return runtime.GOOS == "windows" && !isGoRunProcess() && !hasConsoleOverride()
+}
+
+func hasConsoleOverride() bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv("LG_CONSOLE_MODE")))
+	return value == "1" || value == "true" || value == "console"
+}
+
+func isGoRunProcess() bool {
+	exePath, err := os.Executable()
+	if err != nil {
+		return false
+	}
+
+	exeName := strings.ToLower(filepath.Base(exePath))
+	if strings.HasPrefix(exeName, "localgateway") {
+		return false
+	}
+
+	return strings.HasSuffix(exeName, ".exe")
+}
+
+func runTray(adminURL string, requestShutdown func()) {
+	trayExited := make(chan struct{})
+
+		go func() {
+			systray.Run(func() {
+				systray.SetTitle("LocalGateway")
+				systray.SetTooltip(trayTooltip)
+				if len(trayIcon) > 0 {
+					systray.SetIcon(trayIcon)
+				}
+
+				openItem := systray.AddMenuItem("打开管理后台", "在浏览器中打开管理后台")
+				statusItem := systray.AddMenuItem("服务状态：运行中", "当前服务状态")
+				statusItem.Disable()
+				systray.AddSeparator()
+				exitItem := systray.AddMenuItem("退出程序", "关闭 LocalGateway")
+
+
+			go func() {
+				for {
+					select {
+					case <-openItem.ClickedCh:
+						_ = openAdminPage(adminURL, "chrome")
+					case <-exitItem.ClickedCh:
+						requestShutdown()
+						systray.Quit()
+						return
+					case <-trayExited:
+						return
+					}
+				}
+			}()
+		}, func() {
+			close(trayExited)
+		})
+	}()
+}
+
+func watchSignals(requestShutdown func()) {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	requestShutdown()
+	systray.Quit()
+}
+
+func watchSignalsBlocking(requestShutdown func()) {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	requestShutdown()
 }
 
 func waitForServer(addr string, timeout time.Duration) error {

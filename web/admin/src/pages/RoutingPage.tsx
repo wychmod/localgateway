@@ -24,8 +24,8 @@ export function RoutingPage() {
     format: "OpenAI 兼容格式",
     target: "OpenAI 主线路",
     fallback: "Azure 备用线路 → OpenRouter 备用出口",
-    cost: "$0.012 - $0.024",
-    ttft: "180ms - 260ms"
+    cost: "0.012 - 0.024 美元",
+    ttft: "180 - 260 毫秒"
   });
 
   useEffect(() => {
@@ -39,8 +39,8 @@ export function RoutingPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="路由策略"
-          title="策略配置和路由模拟放在一个控制面板里"
-          description="不是只能看规则，而是可以直接改、直接测、直接验证备用链路。"
+          title="策略配置与路由模拟"
+          description="直接改、直接测、直接验证备用链路。"
           actions={
             <button
               type="button"
@@ -120,7 +120,7 @@ export function RoutingPage() {
       </DrawerCard>
 
       <article className="luxury-panel page-panel simulation-panel">
-        <SectionHeader eyebrow="路由模拟" title="路由测试器" description="给定模型、密钥和请求格式，前端直接看到会分发到哪里。" />
+        <SectionHeader eyebrow="路由模拟" title="路由测试器" description="给定模型、密钥和请求格式，直接查看分发目标。" />
         <div className="simulation-grid">
           <div className="metric-pill"><Activity size={16} /> 模型：{simulation.model}</div>
           <div className="metric-pill">密钥：{simulation.key}</div>

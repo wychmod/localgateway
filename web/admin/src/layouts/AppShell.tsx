@@ -45,8 +45,8 @@ const navItems = [
 ];
 
 const themeMeta = {
-  light: { label: "浅色模式", icon: Sun },
-  dark: { label: "深色模式", icon: Moon },
+  light: { label: "浅色", icon: Sun },
+  dark: { label: "深色", icon: Moon },
   system: { label: "跟随系统", icon: SunMoon }
 } as const;
 
@@ -144,7 +144,7 @@ export function AppShell({ children }: PropsWithChildren) {
         <div className="theme-switcher luxury-panel nested-panel">
           <div>
             <div className="theme-title">界面主题</div>
-            <div className="theme-subtitle">浅色 / 深色 / 跟随系统</div>
+            <div className="theme-subtitle">切换浅色、深色或跟随系统</div>
           </div>
           <div className="theme-buttons">
             {(["light", "dark", "system"] as const).map((item) => {

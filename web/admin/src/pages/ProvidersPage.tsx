@@ -3,6 +3,7 @@ import { Plus, RefreshCcw, Wifi } from "lucide-react";
 import { DrawerCard } from "../components/DrawerCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAdminStore } from "../store/admin-store";
+import { providerStatusMap } from "../store/labels";
 
 const emptyProvider = (count: number) => ({
   id: `prov-${Date.now()}`,
@@ -38,8 +39,8 @@ export function ProvidersPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="厂商接入"
-          title="所有厂商接入都能在这里完成"
-          description="新增、编辑、调优、测试连接和模型发现都收口在这里。"
+          title="厂商管理 · 接入 · 调优"
+          description="新增、编辑、测试连接和模型发现都收口在这里。"
           actions={
             <>
               <button
@@ -94,9 +95,9 @@ export function ProvidersPage() {
               <div>
                 <strong>{provider.name}</strong>
                 <span>{provider.type} · {provider.baseURL}</span>
-                <small>{provider.models.length} 个模型 · 每分钟请求 {provider.rpm} 次 · 每分钟令牌 {provider.tpm.toLocaleString()}</small>
+                <small>{provider.models.length} 个模型 · 每分钟 {provider.rpm} 次请求 · 每分钟 {provider.tpm.toLocaleString()} 个令牌</small>
               </div>
-              <span className={`status-pill ${provider.status}`}>{provider.status}</span>
+              <span className={`status-pill ${provider.status}`}>{providerStatusMap[provider.status] ?? provider.status}</span>
             </button>
           ))}
         </div>
@@ -135,7 +136,7 @@ export function ProvidersPage() {
         </div>
 
         <div className="metric-bar-grid detail-metric-grid">
-          <div className="metric-pill">当前状态 {form.status}</div>
+          <div className="metric-pill">当前状态 {providerStatusMap[form.status] ?? form.status}</div>
           <div className="metric-pill">模型数量 {form.models.length}</div>
           <div className="metric-pill">优先级 {form.priority}</div>
           <div className={`metric-pill ${hasUnsavedChanges ? "warning-pill" : "success-pill"}`}>
@@ -158,7 +159,7 @@ export function ProvidersPage() {
               pushNotice({
                 tone: "success",
                 title: "连接测试通过",
-                message: `${form.name} 返回 200 OK，当前延迟表现处于可接受区间。`
+                message: `${form.name} 返回 200 正常，当前延迟表现处于可接受区间。`
               })
             }
           >

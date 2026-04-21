@@ -12,8 +12,8 @@ export function SettingsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="系统设置"
-          title="系统配置全部前端收口"
-          description="端口、认证、日志、更新、备份和主题都不需要去碰配置文件。"
+          title="系统配置 · 全前端收口"
+          description="端口、认证、日志、更新、备份和主题都不需要手动改配置文件。"
           actions={<button type="button" className="primary-button" onClick={() => saveSettings(form)}><Save size={16} /> 保存设置</button>}
         />
         <div className="form-grid">
@@ -61,12 +61,12 @@ export function SettingsPage() {
       </article>
 
       <article className="luxury-panel page-panel distribution-panel">
-        <SectionHeader eyebrow="分发设置" title="下载后直接用" description="目标是单目录分发：拿到压缩包、解压、双击即可启动。" />
+        <SectionHeader eyebrow="分发设置" title="下载后直接用" description="单目录分发：拿到压缩包、解压、双击即可启动。" />
         <div className="distribution-stack">
-          <div className="metric-pill"><PackageOpen size={16} /> localgateway.zip</div>
-          <div className="metric-pill">包含 localgateway.exe / config.yaml / data / logs</div>
-          <div className="metric-pill">管理后台最终会内嵌进 Go 二进制</div>
-          <div className="metric-pill">首次启动自动初始化 SQLite 与默认配置</div>
+          <div className="metric-pill"><PackageOpen size={16} /> 分发包：localgateway.zip</div>
+          <div className="metric-pill">包含：主程序、配置文件、数据与日志目录</div>
+          <div className="metric-pill">管理后台将内嵌至单一可执行文件</div>
+          <div className="metric-pill">首次启动自动初始化数据库与默认配置</div>
           <div className="inline-actions">
             <button type="button" className="ghost-button"><Download size={16} /> 导出打包说明</button>
             <button type="button" className="ghost-button">生成便携版安装包</button>

@@ -4,8 +4,8 @@ import { SectionHeader } from "../components/SectionHeader";
 const versionBlocks = [
   { label: "版本号", value: "0.1.0-alpha", icon: Hash },
   { label: "发布通道", value: "便携预览版", icon: TimerReset },
-  { label: "安全状态", value: "仅限本地访问 / 管理员登录待完善", icon: Shield },
-  { label: "当前状态", value: "基础功能已提交", icon: CircleCheckBig }
+  { label: "安全状态", value: "仅限本地访问 · 登录功能待完善", icon: Shield },
+  { label: "当前状态", value: "基础功能已就绪", icon: CircleCheckBig }
 ];
 
 export function VersionInfoPage() {

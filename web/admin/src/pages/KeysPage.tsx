@@ -3,6 +3,7 @@ import { Copy, RotateCcw, ShieldAlert } from "lucide-react";
 import { DrawerCard } from "../components/DrawerCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAdminStore } from "../store/admin-store";
+import { keyStatusMap } from "../store/labels";
 
 const createEmptyKey = () => ({
   id: `key-${Date.now()}`,
@@ -36,8 +37,8 @@ export function KeysPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="本地密钥"
-          title="权限、预算、续期都能在这里完成"
-          description="创建、复制、轮换、吊销、预算限制和工具接入提示全部集中处理。"
+          title="权限 · 预算 · 续期管理"
+          description="创建、复制、轮换、吊销、预算限制和工具接入全部集中处理。"
           actions={
             <button
               type="button"
@@ -49,7 +50,7 @@ export function KeysPage() {
                 pushNotice({
                   tone: "info",
                   title: "已创建空白密钥草稿",
-                  message: "给它配置允许模型和预算后，就可以直接保存到本地状态。"
+                  message: "配置允许模型和预算后，即可保存到本地状态。"
                 });
               }}
             >
@@ -75,9 +76,9 @@ export function KeysPage() {
               <div>
                 <strong>{key.name}</strong>
                 <span>{key.displayKey}</span>
-                <small>{key.allowedModels.length} 个模型 · 已用 ${key.currentSpend.toFixed(1)} / ${key.monthlyBudget}</small>
+                <small>{key.allowedModels.length} 个模型 · 已用 {key.currentSpend.toFixed(1)} / {key.monthlyBudget} 美元</small>
               </div>
-              <span className={`status-pill ${key.status}`}>{key.status}</span>
+              <span className={`status-pill ${key.status}`}>{keyStatusMap[key.status] ?? key.status}</span>
             </button>
           ))}
         </div>
@@ -110,11 +111,11 @@ export function KeysPage() {
             />
           </label>
           <label>
-            <span>月预算</span>
+            <span>月预算（美元）</span>
             <input type="number" value={form.monthlyBudget} onChange={(e) => setForm({ ...form, monthlyBudget: Number(e.target.value) })} />
           </label>
           <label>
-            <span>令牌预算</span>
+            <span>令牌预算（个）</span>
             <input type="number" value={form.tokenBudget} onChange={(e) => setForm({ ...form, tokenBudget: Number(e.target.value) })} />
           </label>
         </div>
@@ -137,8 +138,8 @@ export function KeysPage() {
         </div>
 
         <div className="metric-bar-grid">
-          <div className="metric-pill">已用费用 ${form.currentSpend.toFixed(1)} / ${form.monthlyBudget}</div>
-          <div className="metric-pill">已用令牌 {form.currentTokens.toLocaleString()} / {form.tokenBudget.toLocaleString()}</div>
+          <div className="metric-pill">已用费用 {form.currentSpend.toFixed(1)} / {form.monthlyBudget} 美元</div>
+          <div className="metric-pill">已用令牌 {form.currentTokens.toLocaleString()} / {form.tokenBudget.toLocaleString()} 个</div>
         </div>
 
         <div className="inline-actions sticky-actions">
@@ -153,7 +154,7 @@ export function KeysPage() {
           <button
             type="button"
             className="ghost-button"
-            onClick={() => pushNotice({ tone: "warning", title: "轮换流程已预留", message: `后续接上真实接口后，会先生成新密钥，再给旧密钥留出平滑迁移窗口。` })}
+            onClick={() => pushNotice({ tone: "warning", title: "轮换流程已预留", message: "后续接上真实接口后，会先生成新密钥，再给旧密钥留出平滑迁移窗口。" })}
           >
             <RotateCcw size={16} /> 轮换密钥
           </button>

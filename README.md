@@ -194,6 +194,20 @@ cd D:\idea\localgateway\build\portable\LocalGateway
 
 在 Windows 下会优先尝试使用 **Chrome** 打开管理页面；如果本机未安装 Chrome，则会回退到系统默认浏览器。
 
+同时，正式打包出来的 `.exe` 会以更接近桌面产品的方式运行：
+
+- 启动时不弹出控制台黑窗口
+- 常驻系统托盘
+- 可通过托盘菜单再次打开管理后台
+- 可通过托盘菜单主动退出程序
+
+如果你需要保留命令行窗口用于开发调试，可以继续使用：
+
+```powershell
+go run .\cmd\localgateway
+```
+
+
 
 ---
 

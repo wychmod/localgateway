@@ -21,34 +21,34 @@ export function AnalyticsPage() {
   }, []);
 
   const highlight = dimension === "cost"
-    ? `近 7 日总费用 $${summary.totalCost}`
-    : `近 7 日总请求 ${summary.totalRequests.toLocaleString()}`;
+    ? `近 7 日总费用 ${summary.totalCost} 美元`
+    : `近 7 日总请求 ${summary.totalRequests.toLocaleString()} 次`;
 
   return (
     <section className="page-grid analytics-workbench">
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="数据分析"
-          title="费用、请求、令牌与性能统一分析台"
-          description="支持按时间范围与维度切换查看，并预留导出入口。"
+          title="费用 · 请求 · 令牌与性能分析"
+          description="按时间范围与维度切换查看，支持导出数据。"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${range === "7d" ? "active-chip" : ""}`} onClick={() => setRange("7d")}>近 7 天</button>
               <button type="button" className={`ghost-button compact ${range === "30d" ? "active-chip" : ""}`} onClick={() => setRange("30d")}>近 30 天</button>
-              <button type="button" className="ghost-button compact">导出 CSV</button>
-              <button type="button" className="ghost-button compact">导出 JSON</button>
+              <button type="button" className="ghost-button compact">导出表格</button>
+              <button type="button" className="ghost-button compact">导出数据</button>
             </>
           }
         />
         <div className="metric-bar-grid analytics-summary-grid">
-          <div className="metric-pill">总费用 ${summary.totalCost}</div>
-          <div className="metric-pill">总请求 {summary.totalRequests.toLocaleString()}</div>
-          <div className="metric-pill">总令牌 {summary.totalTokens.toLocaleString()}</div>
+          <div className="metric-pill">总费用 {summary.totalCost} 美元</div>
+          <div className="metric-pill">总请求 {summary.totalRequests.toLocaleString()} 次</div>
+          <div className="metric-pill">总令牌 {summary.totalTokens.toLocaleString()} 个</div>
           <div className="metric-pill">统计范围 {range === "7d" ? "近 7 天" : "近 30 天"}</div>
         </div>
         <article className="luxury-panel nested-panel insight-card">
           <strong>当前焦点</strong>
-          <p>{highlight}，适合继续下钻到厂商或密钥级别做定位。</p>
+          <p>{highlight}，可继续下钻到厂商或密钥级别定位。</p>
         </article>
       </article>
 
@@ -56,7 +56,7 @@ export function AnalyticsPage() {
         <SectionHeader
           eyebrow="趋势变化"
           title="趋势图切换"
-          description="同一块图形区域支持费用与请求两个视角切换。"
+          description="支持费用与请求两个视角切换。"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${dimension === "cost" ? "active-chip" : ""}`} onClick={() => setDimension("cost")}>费用</button>
@@ -77,7 +77,7 @@ export function AnalyticsPage() {
       </article>
 
       <article className="luxury-panel page-panel">
-        <SectionHeader eyebrow="成本分布" title="各厂商费用分布" description="后续还可以继续扩展到密钥、模型、错误率等更多维度。" />
+        <SectionHeader eyebrow="成本分布" title="各厂商费用分布" description="后续可扩展至密钥、模型、错误率等更多维度。" />
         <div className="chart-wrap tall">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={providerBreakdown}>

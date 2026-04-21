@@ -17,11 +17,11 @@ export function SecurityPage() {
             <input defaultValue="admin" />
           </label>
           <label>
-            <span>密码</span>
+            <span>登录密码</span>
             <input type="password" defaultValue="ChangeMeNow!" />
           </label>
           <label className="span-2">
-            <span>会话模式</span>
+            <span>会话保持方式</span>
             <input defaultValue="cookie-session" />
           </label>
         </div>

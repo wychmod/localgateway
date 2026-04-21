@@ -1,25 +1,25 @@
 export const statCards = [
   {
     title: "今日请求",
-    value: "12,846",
+    value: "12,846 次",
     delta: "+18.4%",
     tone: "violet"
   },
   {
     title: "本月费用",
-    value: "$1,284.73",
+    value: "1,284.73 美元",
     delta: "-6.8%",
     tone: "emerald"
   },
   {
     title: "平均首字返回时间",
-    value: "218ms",
-    delta: "-14ms",
+    value: "218 毫秒",
+    delta: "-14 毫秒",
     tone: "sky"
   },
   {
     title: "可用厂商",
-    value: "08",
+    value: "8 家",
     delta: "+2",
     tone: "amber"
   }
@@ -43,7 +43,7 @@ export const costTrend = [
 ];
 
 export const alertFeed = [
-  { level: "warning", title: "Claude 高级线路延迟升高", description: "最近 5 分钟首字返回时间超过 320ms，已触发备用链路观察。" },
+  { level: "warning", title: "Claude 高级线路延迟升高", description: "最近 5 分钟首字返回时间超过 320 毫秒，已触发备用链路观察。" },
   { level: "info", title: "Cursor 团队密钥预算达到 35%", description: "月度使用趋势正常，无需限流。" },
   { level: "critical", title: "Azure 备用线路最近 1 小时切换次数增加", description: "建议检查 OpenAI 主线路出站稳定性。" }
 ];
@@ -58,13 +58,13 @@ export const quickActions = [
 
 export const distributionStatus = {
   artifact: "localgateway.zip",
-  mode: "便携版 / 下载即用",
-  bundle: "管理后台前端将内嵌进入单个二进制",
-  init: "首次启动自动初始化 config、data、logs"
+  mode: "便携版 · 下载即用",
+  bundle: "管理后台前端将内嵌至单一可执行文件",
+  init: "首次启动自动初始化配置、数据与日志目录"
 };
 
 export const liveRequests = [
-  { tool: "Codex", model: "gpt-4o", provider: "OpenAI 主线路", latency: "182ms", status: "流式返回中" },
-  { tool: "Claude Desktop", model: "claude-sonnet-4", provider: "Claude 高级线路", latency: "246ms", status: "正常" },
-  { tool: "Cursor", model: "gpt-4o-mini", provider: "DeepSeek 节省线路", latency: "128ms", status: "正常" }
+  { tool: "Codex", model: "gpt-4o", provider: "OpenAI 主线路", latency: "182 毫秒", status: "流式返回中" },
+  { tool: "Claude Desktop", model: "claude-sonnet-4", provider: "Claude 高级线路", latency: "246 毫秒", status: "正常" },
+  { tool: "Cursor", model: "gpt-4o-mini", provider: "DeepSeek 节省线路", latency: "128 毫秒", status: "正常" }
 ];
