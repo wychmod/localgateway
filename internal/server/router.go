@@ -94,6 +94,10 @@ func (r *Router) mount() {
 		adminRouter.Get("/distribution", r.handleDistributionPlan)
 	})
 
+	adminAssets := http.FileServer(embed.AdminFS())
+	r.mux.Handle("/assets/*", adminAssets)
+	r.mux.Handle("/admin/assets/*", http.StripPrefix("/admin", adminAssets))
+
 	// Serve embedded admin UI on /admin with SPA fallback.
 	// API routes (/admin/api/*) are registered above and take priority over this static handler.
 	r.mux.Get("/admin", func(w http.ResponseWriter, r *http.Request) {

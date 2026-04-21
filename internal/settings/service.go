@@ -36,7 +36,7 @@ func (s *Service) Get(ctx context.Context) (AppSettings, error) {
 	if err := s.db.WithContext(ctx).Where("key = ?", "app_settings").First(&record).Error; err != nil {
 		defaultSettings := AppSettings{
 			Host:           "127.0.0.1",
-			Port:           9090,
+			Port:           18743,
 			AdminPath:      "/admin",
 			AdminUsername:  "admin",
 			Theme:          "system",

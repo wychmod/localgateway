@@ -31,7 +31,7 @@ func Load(path string) (Config, error) {
 
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.host", "127.0.0.1")
-	v.SetDefault("server.port", 9090)
+	v.SetDefault("server.port", 18743)
 	v.SetDefault("server.admin_path", "/admin")
 	v.SetDefault("server.read_timeout", 15)
 	v.SetDefault("server.write_timeout", 120)

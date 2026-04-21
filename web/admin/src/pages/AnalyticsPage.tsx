@@ -11,7 +11,7 @@ const providerBreakdown = [
 
 export function AnalyticsPage() {
   const [range, setRange] = useState("7d");
-  const [dimension, setDimension] = useState("cost");
+  const [dimension, setDimension] = useState<"cost" | "requests">("cost");
 
   const summary = useMemo(() => {
     const totalCost = costTrend.reduce((sum, item) => sum + item.cost, 0);
@@ -19,6 +19,10 @@ export function AnalyticsPage() {
     const totalTokens = costTrend.reduce((sum, item) => sum + item.tokens, 0);
     return { totalCost, totalRequests, totalTokens };
   }, []);
+
+  const highlight = dimension === "cost"
+    ? `7 日总费用 $${summary.totalCost}`
+    : `7 日总请求 ${summary.totalRequests.toLocaleString()}`;
 
   return (
     <section className="page-grid analytics-workbench">
@@ -42,6 +46,10 @@ export function AnalyticsPage() {
           <div className="metric-pill">Tokens {summary.totalTokens.toLocaleString()}</div>
           <div className="metric-pill">Mode {range}</div>
         </div>
+        <article className="luxury-panel nested-panel insight-card">
+          <strong>当前焦点</strong>
+          <p>{highlight}，适合继续下钻到 Provider 或 Key 级别做定位。</p>
+        </article>
       </article>
 
       <article className="luxury-panel page-panel">

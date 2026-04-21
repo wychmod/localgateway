@@ -41,21 +41,37 @@ export function LogsPage() {
             </>
           }
         />
+
+        <div className="context-strip">
+          <div className="metric-pill">Matched {filtered.length}</div>
+          <div className="metric-pill">Fallback {logs.filter((item) => item.status === "Fallback").length}</div>
+          <div className="metric-pill">Search {query ? "Active" : "All"}</div>
+        </div>
+
         <label className="search-box">
           <span><Search size={16} /></span>
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="按路径、Provider、状态、详情搜索" />
         </label>
-        <div className="stack-list">
-          {filtered.map((log) => (
-            <button key={log.id} type="button" className={`select-card ${active?.id === log.id ? "active" : ""}`} onClick={() => setSelectedId(log.id)}>
-              <div>
-                <strong>{log.path}</strong>
-                <span>{log.provider} · {log.time}</span>
-              </div>
-              <span className={`status-pill ${log.status === "Fallback" ? "warning" : "healthy"}`}>{log.status}</span>
-            </button>
-          ))}
-        </div>
+
+        {filtered.length ? (
+          <div className="stack-list">
+            {filtered.map((log) => (
+              <button key={log.id} type="button" className={`select-card ${active?.id === log.id ? "active" : ""}`} onClick={() => setSelectedId(log.id)}>
+                <div>
+                  <strong>{log.path}</strong>
+                  <span>{log.provider} · {log.time}</span>
+                  <small>{log.latency} · {log.detail}</small>
+                </div>
+                <span className={`status-pill ${log.status === "Fallback" ? "warning" : "healthy"}`}>{log.status}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <article className="luxury-panel nested-panel empty-state-card">
+            <strong>没有匹配到日志</strong>
+            <p>换个关键词，或者取消 Fallback Only 过滤器试试。</p>
+          </article>
+        )}
       </article>
 
       <article className="luxury-panel page-panel detail-panel">
@@ -76,7 +92,10 @@ export function LogsPage() {
             </article>
           </div>
         ) : (
-          <p className="section-description">没有匹配到日志。</p>
+          <article className="luxury-panel nested-panel empty-state-card">
+            <strong>右侧暂无详情</strong>
+            <p>先在左边选一条日志，或者放宽筛选条件。</p>
+          </article>
         )}
       </article>
     </section>

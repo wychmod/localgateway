@@ -1,19 +1,54 @@
-# Logs
-node_modules/
-dist/
-coverage/
-*.log
-*.tmp
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Editors / IDE
+.idea/
+.vscode/
+
+# Environment
 .env
 .env.*
 !.env.example
+
+# Logs / temp
+*.log
+*.tmp
+err.txt
+out.txt
+
+# Runtime data
 /data/
 /logs/
-/release/*.zip
-/release/*.exe
+
+# Go build outputs
+*.exe
+*.test
+*.out
+
+# Frontend dependencies / build outputs
+node_modules/
+dist/
+coverage/
 /web/admin/node_modules/
 /web/admin/dist/
-/.idea/
-/.vscode/
-.DS_Store
-Thumbs.db
+
+# Embedded frontend build artifacts (generated)
+/build/embed/admin/
+
+# Portable / release artifacts (generated)
+/build/portable/
+/release/*.zip
+/release/*.exe
+
+# Local binary in repo root
+/localgateway.exe
+
+# WorkBuddy local state
+/.workbuddy/memory/
+/.workbuddy/teams/
+
+# Explicitly track repository sources that may be shadowed by broad rules
+!/web/admin/package-lock.json
+
+

@@ -1,80 +1,102 @@
-# LocalGateway 启动与分发清单
+# LocalGateway 启动与分发说明
 
 ## 当前状态
 
-仓库已经完成高端 Admin 可操作工作台、Dashboard 中控首页、Analytics 分析台、Logs 问题定位台，以及 Bootstrap / Security / Release / Version / Build Checks 页面与后端占位服务扩充，但当前机器没有可直接调用的 Go 环境，因此尚未完成真实编译与打包。
+项目当前已经完成以下关键能力：
 
-## 当前前端可操作范围
+- 后端可编译、可运行
+- SQLite 已切换为纯 Go 驱动，无需 CGO
+- Admin 前端已嵌入 Go 二进制
+- `/admin/*` 已支持 SPA fallback
+- Portable 单目录形态已完成验证
+- 可通过 `build/package.ps1` 一键打包
 
-Admin 已具备这些交互原型：
+---
 
-- Provider 新增 / 选择 / 编辑 / 测试 / 模型发现
-- Local Key 权限 / 预算 / 轮换 / 吊销动作入口
-- Routing 规则编辑与路由模拟器
-- Dashboard 中控操作区与告警流
-- Analytics 趋势与分布分析台
-- Logs 搜索、Fallback 筛选与详情面板
-- Settings 系统配置与分发状态面板
-- Bootstrap 首次启动向导与初始化状态页
-- Bootstrap Success 首次启动完成页
-- Initialization Guard 未初始化拦截
-- Security 登录与默认安全基线页
-- Release portable 发布状态页
-- Version 版本信息页
-- Build Checks 构建检查项页
-- Quick Setup 工具接入说明
+## 已验证接口
 
-## 打包结构
+| 接口 | 方法 | 状态 |
+|------|------|------|
+| `/health` | GET | ✅ 200 |
+| `/v1/models` | GET | ✅ 200 |
+| `/admin/api/overview` | GET | ✅ 200 |
+| `/admin/` | GET | ✅ 200 |
+| `/admin/providers` | GET | ✅ 200 |
 
-已准备目录：
+---
 
-```text
-packaging/
-└── windows-portable/
-    ├── SPEC.md
-    └── README.txt
+## 启动方式
 
-build/
-└── embed/
-    └── doc.go
+### 开发模式
 
-release/
-└── README.md
-```
-
-## 接入 Go 环境后建议执行
-
-### 后端
 ```powershell
 cd D:\idea\localgateway
-go mod tidy
-go run .\cmd\localgateway
+D:\Go\bin\go.exe run .\cmd\localgateway
 ```
 
-### 前端
+### 编译后启动
+
 ```powershell
-cd D:\idea\localgateway\web\admin
-npm install
-npm run dev
+cd D:\idea\localgateway
+D:\Go\bin\go.exe build -o localgateway.exe .\cmd\localgateway
+.\localgateway.exe
 ```
 
-## 目标分发方式
+### Portable 模式
 
-最终交付应为：
+```powershell
+cd D:\idea\localgateway\build\portable\LocalGateway
+.\localgateway.exe
+```
 
-- `localgateway.zip`
-- 解压后可直接运行 `localgateway.exe`
-- 前端静态资源嵌入二进制
-- 首次启动自动创建 `config.yaml`、`data/`、`logs/`
-- 首次进入 Admin 时先经过初始化向导与管理员安全设置
-- 初始化完成后进入正式控制台
-- 用户无需 Node / Go 环境即可日常使用
+访问地址：
 
-## 后续要补的关键动作
+```text
+http://127.0.0.1:18743/admin
+```
 
-1. 编译并修正所有 Go 类型与依赖问题
-2. 完成真实 Provider 调用与 SSE 流式转发
-3. 接通 Bootstrap / Security / Release / Version / Build Checks 真实状态接口
-4. 将 Vite build 产物嵌入 Go
-5. 实现首次启动初始化向导的真实写盘逻辑
-6. 生成 Windows 可分发压缩包
+---
+
+## 打包方式
+
+```powershell
+cd D:\idea\localgateway
+powershell -File build\package.ps1
+```
+
+打包输出目录：
+
+```text
+build/portable/LocalGateway/
+```
+
+---
+
+## Portable 目录结构
+
+```text
+LocalGateway/
+├── localgateway.exe
+├── config.yaml
+├── data/
+├── logs/
+└── README.txt
+```
+
+---
+
+## 配置加载优先级
+
+1. `LG_CONFIG` 环境变量
+2. 当前目录 `config.yaml`
+3. `configs/config.example.yaml`
+
+---
+
+## 下一步建议
+
+1. 接通真实 Provider 出站请求
+2. 完成 SSE 流式转发
+3. 打通 Bootstrap / Security / Release / Version / Build Checks 真实状态接口
+4. 完成前后端真实联调
+5. 生成最终 ZIP 分发包
