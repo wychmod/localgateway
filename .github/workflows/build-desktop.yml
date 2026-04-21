@@ -1,0 +1,76 @@
+name: Build Desktop Apps
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Prepare Frontend
+        run: |
+          robocopy web\admin frontend /E /COPY:DAT
+          cd frontend
+          npm install
+          npm run build:wails
+
+      - name: Build Windows App
+        run: wails build -s -skipbindings -platform windows/amd64 -o LocalGateway.exe
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalGateway-Windows
+          path: build/bin/LocalGateway.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Prepare Frontend
+        run: |
+          cp -r web/admin frontend
+          cd frontend
+          npm install
+          npm run build:wails
+
+      - name: Build macOS App
+        run: wails build -s -skipbindings -platform darwin/universal -o LocalGateway
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalGateway-macOS
+          path: build/bin/LocalGateway.app

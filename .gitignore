@@ -32,6 +32,7 @@ dist/
 coverage/
 /web/admin/node_modules/
 /web/admin/dist/
+/frontend/
 
 # Embedded frontend build artifacts (generated)
 /build/embed/admin/

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "localgateway",
+  "outputfilename": "LocalGateway",
+  "frontend": {
+    "dir": "frontend",
+    "install": "npm install",
+    "build": "npm run build:wails",
+    "dev": "npm run dev",
+    "serve": "npx vite preview --port 5173"
+  },
+  "assetdir": "frontend/dist",
+  "wailsjsdir": "frontend/src",
+  "author": {
+    "name": "LocalGateway Team",
+    "email": "team@localgateway.dev"
+  },
+  "info": {
+    "companyName": "LocalGateway",
+    "productName": "LocalGateway",
+    "productVersion": "2.0.0",
+    "copyright": "Copyright LocalGateway Team",
+    "comments": "本地 AI API 网关桌面版"
+  }
+}

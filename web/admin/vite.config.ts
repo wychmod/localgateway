@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "/admin/",
+  base: process.env.VITE_BASE || "/admin/",
   plugins: [react()],
   server: {
     host: "127.0.0.1",
