@@ -50,7 +50,7 @@ export const useAdminStore = create<AdminState>((set) => ({
     {
       id: 1,
       tone: "info",
-      title: "欢迎使用 LocalGateway 管理后台",
+      title: "欢迎使用灵枢控制台",
       message: "当前界面基于本地演示数据运行，适合先打磨配置流、状态流与交互细节。"
     }
   ],

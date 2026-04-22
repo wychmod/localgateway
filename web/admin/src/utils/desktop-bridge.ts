@@ -1,14 +1,40 @@
 import { EventsOn } from "../wailsjs/runtime/runtime";
 import {
   CloseWindow,
+  GetConfigSummary,
   GetDesktopStatus,
+  GetRuntimeSummary,
   GetVersion,
+  GetWindowState,
+  HideToTray,
   MinimiseWindow,
   OpenAdminInBrowser,
+  RestoreLastRoute,
+  RunSelfCheck,
+  SaveWindowState,
   SendNativeNotice,
+  ShowMainWindow,
   ToggleMaximiseWindow
 } from "../wailsjs/go/main/DesktopApp";
 import { isDesktopMode } from "./desktop-env";
+
+export type DesktopCheckItem = {
+  key: string;
+  title: string;
+  description: string;
+  status: string;
+  detail: string;
+};
+
+export type DesktopWindowState = {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  maximised: boolean;
+  lastRoute: string;
+  hiddenToTray: boolean;
+};
 
 export type DesktopStatus = {
   version: string;
@@ -19,6 +45,36 @@ export type DesktopStatus = {
   desktopMode: boolean;
   notifications: boolean;
   customChrome: boolean;
+  trayEnabled: boolean;
+  hideToTrayEnabled: boolean;
+  stateRestore: boolean;
+  windowState: DesktopWindowState;
+  runtime: DesktopRuntimeSummary;
+  configSummary: DesktopConfigSummary;
+};
+
+export type DesktopRuntimeSummary = {
+  providers: number;
+  keys: number;
+  rules: number;
+  health: string;
+};
+
+export type DesktopConfigSummary = {
+  host: string;
+  port: number;
+  adminPath: string;
+  theme: string;
+  bundleMode: string;
+  updateChannel: string;
+};
+
+export type DesktopSelfCheck = {
+  health: string;
+  checks: DesktopCheckItem[];
+  warnings: string[];
+  completedAt: string;
+  serverReachable: boolean;
 };
 
 export type DesktopNotice = {
@@ -26,111 +82,94 @@ export type DesktopNotice = {
   message: string;
 };
 
+const emptyWindowState: DesktopWindowState = {
+  width: 1360,
+  height: 860,
+  x: 120,
+  y: 80,
+  maximised: false,
+  lastRoute: "/dashboard",
+  hiddenToTray: false
+};
+
 const emptyStatus: DesktopStatus = {
   version: "browser",
   platform: "web",
   serverAddr: "",
   adminUrl: "",
-  windowTitle: "LocalGateway",
+  windowTitle: "灵枢",
   desktopMode: false,
   notifications: false,
-  customChrome: false
+  customChrome: false,
+  trayEnabled: false,
+  hideToTrayEnabled: false,
+  stateRestore: false,
+  windowState: emptyWindowState,
+  runtime: {
+    providers: 0,
+    keys: 0,
+    rules: 0,
+    health: "browser"
+  },
+  configSummary: {
+    host: "127.0.0.1",
+    port: 0,
+    adminPath: "/admin",
+    theme: "system",
+    bundleMode: "browser",
+    updateChannel: "stable"
+  }
 };
 
 export async function fetchDesktopStatus(): Promise<DesktopStatus> {
-  if (!isDesktopMode) {
-    return emptyStatus;
-  }
-
-  try {
-    return await GetDesktopStatus();
-  } catch {
-    return emptyStatus;
-  }
+  if (!isDesktopMode) return emptyStatus;
+  try { return await GetDesktopStatus(); } catch { return emptyStatus; }
 }
-
 export async function fetchDesktopVersion(): Promise<string> {
-  if (!isDesktopMode) {
-    return "browser";
-  }
-
-  try {
-    return await GetVersion();
-  } catch {
-    return "browser";
-  }
+  if (!isDesktopMode) return "browser";
+  try { return await GetVersion(); } catch { return "browser"; }
 }
-
-export function minimiseDesktopWindow() {
-  if (!isDesktopMode) {
-    return;
-  }
-  void MinimiseWindow();
+export async function fetchRuntimeSummary(): Promise<DesktopRuntimeSummary> {
+  if (!isDesktopMode) return emptyStatus.runtime;
+  return GetRuntimeSummary();
 }
-
-export function toggleDesktopMaximise() {
-  if (!isDesktopMode) {
-    return;
-  }
-  void ToggleMaximiseWindow();
+export async function fetchConfigSummary(): Promise<DesktopConfigSummary> {
+  if (!isDesktopMode) return emptyStatus.configSummary;
+  return GetConfigSummary();
 }
-
-export function closeDesktopWindow() {
+export async function runDesktopSelfCheck(): Promise<DesktopSelfCheck> {
   if (!isDesktopMode) {
-    return;
+    return { health: "browser", checks: [], warnings: ["当前为浏览器模式，发布前检查器不可用"], completedAt: new Date().toISOString(), serverReachable: true };
   }
-  void CloseWindow();
+  return RunSelfCheck();
 }
-
-export function openDesktopAdminInBrowser() {
-  if (!isDesktopMode) {
-    window.open("/dashboard", "_blank");
-    return;
-  }
-  void OpenAdminInBrowser();
+export async function fetchWindowState(): Promise<DesktopWindowState> {
+  if (!isDesktopMode) return emptyWindowState;
+  return GetWindowState();
 }
+export function persistWindowState(next: DesktopWindowState) { if (!isDesktopMode) return; void SaveWindowState(next); }
+export async function restoreDesktopRoute() { if (!isDesktopMode) return "/dashboard"; return RestoreLastRoute(); }
+export function minimiseDesktopWindow() { if (!isDesktopMode) return; void MinimiseWindow(); }
+export function toggleDesktopMaximise() { if (!isDesktopMode) return; void ToggleMaximiseWindow(); }
+export function closeDesktopWindow() { if (!isDesktopMode) return; void CloseWindow(); }
+export function hideDesktopToTray() { if (!isDesktopMode) return; void HideToTray(); }
+export function showDesktopWindow() { if (!isDesktopMode) return; void ShowMainWindow(); }
+export function openDesktopAdminInBrowser() { if (!isDesktopMode) { window.open("/dashboard", "_blank"); return; } void OpenAdminInBrowser(); }
+export function sendDesktopNotice(title: string, message: string) { if (!isDesktopMode) return; void SendNativeNotice(title, message); }
 
-export function sendDesktopNotice(title: string, message: string) {
-  if (!isDesktopMode) {
-    return;
-  }
-  void SendNativeNotice(title, message);
-}
-
-export function onDesktopStatus(handler: (payload: DesktopStatus) => void) {
-  if (!isDesktopMode) {
-    return () => undefined;
-  }
-
+function subscribe<T>(eventName: string, handler: (payload: T) => void) {
+  if (!isDesktopMode) return () => undefined;
   let unsubscribe = () => undefined;
-  void EventsOn("desktop:server-ready", (payload) => handler(payload as DesktopStatus)).then((fn) => {
-    unsubscribe = fn;
-  });
+  void EventsOn(eventName, (payload) => handler(payload as T)).then((fn) => { unsubscribe = fn; });
   return () => unsubscribe();
 }
 
-export function onDesktopDomReady(handler: (payload: DesktopStatus) => void) {
-  if (!isDesktopMode) {
-    return () => undefined;
-  }
-
-  let unsubscribe = () => undefined;
-  void EventsOn("desktop:dom-ready", (payload) => handler(payload as DesktopStatus)).then((fn) => {
-    unsubscribe = fn;
-  });
-  return () => unsubscribe();
-}
-
-export function onDesktopNotice(handler: (payload: DesktopNotice) => void) {
-  if (!isDesktopMode) {
-    return () => undefined;
-  }
-
-  let unsubscribe = () => undefined;
-  void EventsOn("desktop:notice", (payload) => handler(payload as DesktopNotice)).then((fn) => {
-    unsubscribe = fn;
-  });
-  return () => unsubscribe();
-}
+export const onDesktopStatus = (handler: (payload: DesktopStatus) => void) => subscribe<DesktopStatus>("desktop:server-ready", handler);
+export const onDesktopDomReady = (handler: (payload: DesktopStatus) => void) => subscribe<DesktopStatus>("desktop:dom-ready", handler);
+export const onDesktopNotice = (handler: (payload: DesktopNotice) => void) => subscribe<DesktopNotice>("desktop:notice", handler);
+export const onDesktopSelfCheck = (handler: (payload: DesktopSelfCheck) => void) => subscribe<DesktopSelfCheck>("desktop:self-check", handler);
+export const onDesktopRestoreRoute = (handler: (payload: string) => void) => subscribe<string>("desktop:restore-route", handler);
+export const onDesktopWindowHidden = (handler: (payload: DesktopWindowState) => void) => subscribe<DesktopWindowState>("desktop:window-hidden", handler);
+export const onDesktopWindowShown = (handler: (payload: DesktopWindowState) => void) => subscribe<DesktopWindowState>("desktop:window-shown", handler);
 
 export { isDesktopMode };
