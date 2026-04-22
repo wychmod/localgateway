@@ -209,9 +209,106 @@ go run .\cmd\localgateway
 
 
 
+### 方式四：Wails 桌面版启动
+
+如果你希望直接以桌面应用窗口运行，而不是打开浏览器，可以使用 Wails 桌面版：
+
+```powershell
+cd D:\idea\localgateway
+wails dev
+```
+
+或者直接构建桌面版：
+
+```powershell
+cd D:\idea\localgateway
+.\build\desktop.ps1
+```
+
+构建完成后输出：
+
+- Windows：`build\bin\LocalGateway.exe`
+- macOS：通过 GitHub Actions 构建 `LocalGateway.app`
+
+桌面版当前已经具备：
+
+- 无边框窗口与自定义标题栏
+- 毛玻璃 / 半透明背景（Windows Mica、macOS translucent）
+- 系统菜单
+- `Ctrl/⌘ + Shift + L` 快捷打开日志页
+- 原生通知链路
+- 高峰值信息通过 Wails bindings 直接获取（如版本、桌面状态）
+
 ---
 
-## 如何使用
+## 双版本说明
+
+当前仓库同时维护两种运行模式：
+
+| 模式 | 入口 | 特点 |
+|------|------|------|
+| 浏览器版 | `cmd/localgateway/main.go` | 托盘常驻、自动开浏览器、适合便携分发 |
+| 桌面版 | 根目录 `main.go` + `app.go` | Wails 独立窗口、双端打包、支持桌面级交互 |
+
+两者共用：
+
+- 同一套 `internal/` Go 后端服务
+- 同一套 `web/admin/` React 前端代码
+- 同一份配置与数据库逻辑
+
+因此后续功能开发基本只需要维护一套业务代码，桌面能力按需叠加即可。
+
+---
+
+## 桌面版构建说明
+
+### 本地 Windows
+
+```powershell
+.\build\desktop.ps1
+```
+
+### GitHub Actions 双端构建
+
+仓库已经提供：
+
+- `.github/workflows/build-desktop.yml`
+
+当推送 `v*` tag 时，会自动：
+
+- 在 Windows runner 构建 `LocalGateway.exe`
+- 在 macOS runner 构建 `LocalGateway.app`
+
+---
+
+## Wails 桌面增强能力
+
+当前桌面版除了把页面装进窗口里，还额外补齐了几类真正有产品感的桌面特性：
+
+### 1. 自定义窗口边框与标题栏
+- 无边框窗口（Frameless）
+- 自定义标题栏按钮：最小化 / 最大化 / 关闭
+- 玻璃质感与毛玻璃风格背景
+- 保持和现有高端暗色 UI 一致的视觉语言
+
+### 2. 系统菜单与快捷键
+- 系统菜单可直接打开管理后台、发送测试通知、退出应用
+- 前端已支持 `Ctrl/⌘ + Shift + L` 快捷打开日志页
+- 后续可以继续扩展更多全局快捷键或窗口命令
+
+### 3. 原生通知
+- 桌面版支持通过 Wails runtime 派发桌面通知事件
+- 前端可以触发原生通知能力，用于保存成功、启动完成、告警提示等场景
+
+### 4. Wails Bindings 渐进替换 HTTP
+- 当前已把版本号、桌面状态等高频轻量信息切到 Wails bindings
+- 这种方式比绕一圈 HTTP 更轻，适合窗口状态、系统信息、桌面命令等场景
+- 后续可以继续把更多“桌面特有能力”走 bindings，把业务 API 继续保留 HTTP
+
+这个分层方式比较稳：
+
+- **业务数据接口**：继续走 HTTP Router，方便浏览器版和桌面版共用
+- **桌面能力接口**：走 Wails bindings，减少多余网络层并提升桌面交互体验
 
 ### 1. 启动服务
 先按上面的任意方式启动程序。

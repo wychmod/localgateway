@@ -246,9 +246,47 @@ th, td { text-align: left; padding: 16px 12px; border-bottom: 1px solid rgba(255
   transition: opacity 200ms ease;
   z-index: 20;
 }
-.sidebar-backdrop.visible { opacity: 1; pointer-events: auto; }
+.desktop-titlebar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  grid-column: 1 / -1;
+  min-height: 56px;
+  margin-bottom: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.14);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-app-region: drag;
+}
+.desktop-titlebar__brand,
+.desktop-titlebar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.desktop-titlebar__brand small {
+  color: var(--muted);
+}
+.desktop-titlebar__actions {
+  -webkit-app-region: no-drag;
+}
+.titlebar-button {
+  min-width: 40px;
+}
+.titlebar-button.danger:hover {
+  background: rgba(248, 113, 113, 0.18);
+}
 
-@media (max-width: 1320px) {
+:root[data-desktop="true"] .app-shell {
+  padding-top: 14px;
+}
+
   .routing-layout, .analytics-workbench, .logs-layout, .bootstrap-layout, .release-layout, .security-layout { grid-template-columns: 1fr; }
 }
 

@@ -1,8 +1,27 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { useEffect, useState } from "react";
 import { alertFeed, costTrend, distributionStatus, liveRequests, providerHealth, quickActions, statCards } from "../store/mock-data";
 import { providerStatusMap } from "../store/labels";
+import { fetchDesktopStatus, isDesktopMode, type DesktopStatus } from "../utils/desktop-bridge";
+
+const fallbackStatus: DesktopStatus = {
+  version: "browser",
+  platform: "web",
+  serverAddr: "",
+  adminUrl: "",
+  windowTitle: "LocalGateway",
+  desktopMode: false,
+  notifications: false,
+  customChrome: false
+};
 
 export function DashboardPage() {
+  const [desktopStatus, setDesktopStatus] = useState<DesktopStatus>(fallbackStatus);
+
+  useEffect(() => {
+    void fetchDesktopStatus().then(setDesktopStatus);
+  }, []);
+
   return (
     <div className="page-grid dashboard-grid enhanced-dashboard">
       <section className="hero-panel luxury-panel dashboard-hero">
@@ -18,6 +37,13 @@ export function DashboardPage() {
               <button key={action} type="button" className="ghost-button compact">{action}</button>
             ))}
           </div>
+          {isDesktopMode ? (
+            <div className="context-strip">
+              <span className="metric-pill">桌面版本：{desktopStatus.version}</span>
+              <span className="metric-pill">当前平台：{desktopStatus.platform}</span>
+              <span className="metric-pill">服务地址：{desktopStatus.serverAddr || "内嵌模式"}</span>
+            </div>
+          ) : null}
         </div>
         <div className="hero-orb">
           <div className="orb-core" />
@@ -135,3 +161,4 @@ export function DashboardPage() {
     </div>
   );
 }
+

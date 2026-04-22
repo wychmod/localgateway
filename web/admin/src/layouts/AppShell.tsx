@@ -7,10 +7,14 @@ import {
   CheckCircle2,
   Cog,
   FileCheck2,
+  Globe,
   Hash,
   KeyRound,
   LayoutDashboard,
   LockKeyhole,
+  Maximize2,
+  Minimize2,
+  Minus,
   Moon,
   Network,
   PackageCheck,
@@ -26,6 +30,20 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { useUIStore } from "../store/ui-store";
 import { useAdminStore } from "../store/admin-store";
+import {
+  closeDesktopWindow,
+  fetchDesktopStatus,
+  fetchDesktopVersion,
+  isDesktopMode,
+  minimiseDesktopWindow,
+  onDesktopDomReady,
+  onDesktopNotice,
+  onDesktopStatus,
+  openDesktopAdminInBrowser,
+  sendDesktopNotice,
+  toggleDesktopMaximise,
+  type DesktopStatus
+} from "../utils/desktop-bridge";
 
 const navItems = [
   { to: "/dashboard", label: "总览首页", icon: LayoutDashboard, description: "查看系统运行、费用和告警" },
@@ -50,22 +68,83 @@ const themeMeta = {
   system: { label: "跟随系统", icon: SunMoon }
 } as const;
 
+const fallbackDesktopStatus: DesktopStatus = {
+  version: "browser",
+  platform: "web",
+  serverAddr: "",
+  adminUrl: "",
+  windowTitle: "LocalGateway",
+  desktopMode: false,
+  notifications: false,
+  customChrome: false
+};
+
 export function AppShell({ children }: PropsWithChildren) {
   const { theme, setTheme } = useUIStore();
-  const { notices, dismissNotice, keys, providers } = useAdminStore();
+  const { notices, dismissNotice, keys, providers, pushNotice } = useAdminStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopStatus, setDesktopStatus] = useState<DesktopStatus>(fallbackDesktopStatus);
+  const [desktopVersion, setDesktopVersion] = useState("browser");
+  const [desktopMaximised, setDesktopMaximised] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
     const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     root.dataset.theme = isDark ? "dark" : "light";
+    root.dataset.desktop = isDesktopMode ? "true" : "false";
   }, [theme]);
 
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    void fetchDesktopStatus().then(setDesktopStatus);
+    void fetchDesktopVersion().then(setDesktopVersion);
+
+    const offReady = onDesktopStatus((payload) => {
+      setDesktopStatus(payload);
+      pushNotice({
+        tone: "success",
+        title: "桌面服务已就绪",
+        message: `桌面版后端已启动，监听地址 ${payload.serverAddr || "本地内嵌"}。`
+      });
+    });
+
+    const offDom = onDesktopDomReady((payload) => {
+      setDesktopStatus(payload);
+    });
+
+    const offNotice = onDesktopNotice((payload) => {
+      pushNotice({
+        tone: "info",
+        title: payload.title,
+        message: payload.message
+      });
+    });
+
+    const handler = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === "l") {
+        event.preventDefault();
+        navigate("/logs");
+        pushNotice({
+          tone: "info",
+          title: "快捷键已触发",
+          message: "已通过 Ctrl/⌘ + Shift + L 打开运行日志页面。"
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => {
+      offReady();
+      offDom();
+      offNotice();
+      window.removeEventListener("keydown", handler);
+    };
+  }, [navigate, pushNotice]);
 
   const currentPage = useMemo(
     () => navItems.find((item) => location.pathname.startsWith(item.to)) ?? navItems[0],
@@ -76,9 +155,40 @@ export function AppShell({ children }: PropsWithChildren) {
   const activeKey = keys.find((item) => item.status === "active") ?? keys[0];
   const resolvedTheme = themeMeta[theme];
   const ThemeIcon = resolvedTheme.icon;
+  const desktopLabel = desktopStatus.desktopMode ? `桌面版 ${desktopVersion}` : "浏览器版";
+
+  const handleToggleMaximise = () => {
+    setDesktopMaximised((value) => !value);
+    toggleDesktopMaximise();
+  };
 
   return (
     <div className="app-shell">
+      {desktopStatus.desktopMode ? (
+        <header className="desktop-titlebar" style={{ ["--wails-draggable" as string]: "drag" }}>
+          <div className="desktop-titlebar__brand">
+            <Activity size={16} />
+            <span>{desktopStatus.windowTitle}</span>
+            <small>{desktopLabel}</small>
+          </div>
+          <div className="desktop-titlebar__actions" style={{ ["--wails-draggable" as string]: "no-drag" }}>
+            <button type="button" className="ghost-button compact titlebar-button" onClick={() => openDesktopAdminInBrowser()}>
+              <Globe size={14} />
+              外部打开
+            </button>
+            <button type="button" className="ghost-button compact titlebar-button" onClick={() => minimiseDesktopWindow()}>
+              <Minus size={14} />
+            </button>
+            <button type="button" className="ghost-button compact titlebar-button" onClick={handleToggleMaximise}>
+              {desktopMaximised ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
+            <button type="button" className="ghost-button compact titlebar-button danger" onClick={() => closeDesktopWindow()}>
+              <X size={14} />
+            </button>
+          </div>
+        </header>
+      ) : null}
+
       <button
         type="button"
         className={clsx("sidebar-backdrop", sidebarOpen && "visible")}
@@ -115,6 +225,10 @@ export function AppShell({ children }: PropsWithChildren) {
             <div>
               <span>主用密钥</span>
               <strong>{activeKey?.name ?? "尚未配置"}</strong>
+            </div>
+            <div>
+              <span>运行模式</span>
+              <strong>{desktopLabel}</strong>
             </div>
           </div>
         </div>
@@ -182,10 +296,24 @@ export function AppShell({ children }: PropsWithChildren) {
               <ThemeIcon size={14} />
               {resolvedTheme.label}
             </div>
+            <div className="status-badge neutral-pill">
+              <Activity size={14} />
+              {desktopStatus.platform || "web"}
+            </div>
             <button type="button" className="ghost-button compact" onClick={() => navigate("/logs")}>
               <Bell size={16} />
               通知 {notices.length}
             </button>
+            {desktopStatus.desktopMode ? (
+              <button
+                type="button"
+                className="ghost-button compact"
+                onClick={() => sendDesktopNotice("LocalGateway", "桌面通知发送成功，通知链路可用。")}
+              >
+                <Bell size={16} />
+                原生通知
+              </button>
+            ) : null}
             <button type="button" className="ghost-button" onClick={() => navigate("/quick-setup")}>快速接入</button>
             <button type="button" className="primary-button" onClick={() => navigate("/keys")}>新建本地密钥</button>
           </div>
