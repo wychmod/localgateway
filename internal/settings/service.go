@@ -77,9 +77,9 @@ func (s *Service) Backup(ctx context.Context) map[string]any {
 
 func (s *Service) DistributionPlan() map[string]any {
 	return map[string]any{
-		"artifact": "localgateway.zip",
+		"artifact": "lingshu.zip",
 		"mode":     "download-and-run",
-		"contents": []string{"localgateway.exe", "config.yaml", "data/", "logs/"},
+		"contents": []string{"lingshu.exe", "config.yaml", "data/", "logs/"},
 		"notes": []string{
 			"默认单目录部署",
 			"首次下载后即可运行",

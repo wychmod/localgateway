@@ -126,7 +126,7 @@ func (d *DesktopApp) Shutdown(ctx context.Context) {
 func (d *DesktopApp) GetVersion() string { return desktopVersion }
 
 func (d *DesktopApp) GetDesktopStatus() DesktopStatus {
-	status := DesktopStatus{Version: desktopVersion, Platform: runtime.GOOS, WindowTitle: "LocalGateway", DesktopMode: true, Notifications: true, CustomChrome: true, TrayEnabled: true, HideToTrayEnabled: true, StateRestore: true, WindowState: d.State}
+	status := DesktopStatus{Version: desktopVersion, Platform: runtime.GOOS, WindowTitle: "灵枢", DesktopMode: true, Notifications: true, CustomChrome: true, TrayEnabled: true, HideToTrayEnabled: true, StateRestore: true, WindowState: d.State}
 	if d.Application != nil && d.Server != nil {
 		status.ServerAddr = d.Server.Addr
 		status.AdminURL = buildDesktopAdminURL(d.Application.Config.Server.Host, d.Application.Config.Server.Port, d.Application.Config.Server.AdminPath)
@@ -194,11 +194,12 @@ func (d *DesktopApp) ToggleMaximiseWindow() { d.State.Maximised = !d.State.Maxim
 func (d *DesktopApp) CloseWindow() { wailsruntime.Quit(d.ctx) }
 func (d *DesktopApp) OpenAdminInBrowser() { status := d.GetDesktopStatus(); if status.AdminURL != "" { wailsruntime.BrowserOpenURL(d.ctx, status.AdminURL) } }
 func (d *DesktopApp) SendNativeNotice(title string, message string) {
-	if title == "" { title = "LocalGateway" }
+	if title == "" { title = "灵枢" }
 	if message == "" { message = "桌面通知" }
 	wailsruntime.EventsEmit(d.ctx, "desktop:notice", map[string]string{"title": title, "message": message})
 	_, _ = wailsruntime.MessageDialog(d.ctx, wailsruntime.MessageDialogOptions{Type: wailsruntime.InfoDialog, Title: title, Message: message})
 }
+
 
 func (d *DesktopApp) checkProviderConfig() (bool, string) {
 	if d.Application == nil || d.Application.Providers == nil { return false, "Provider 服务未初始化" }
@@ -259,7 +260,7 @@ func (d *DesktopApp) persistWindowState() {
 }
 func desktopStatePath() string {
 	baseDir, err := os.UserConfigDir(); if err != nil { return "desktop-state.json" }
-	return filepath.Join(baseDir, "LocalGateway", "desktop-state.json")
+	return filepath.Join(baseDir, "Lingshu", "desktop-state.json")
 }
 func loadDesktopWindowState() DesktopWindowState {
 	state := defaultDesktopWindowState()

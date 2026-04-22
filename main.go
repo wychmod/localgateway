@@ -64,7 +64,7 @@ func buildDesktopMenu(app *DesktopApp) *menu.Menu {
 	fileMenu.AddText("显示主窗口", nil, func(_ *menu.CallbackData) { app.ShowMainWindow() })
 	fileMenu.AddText("隐藏到托盘", nil, func(_ *menu.CallbackData) { app.HideToTray() })
 	fileMenu.AddText("打开管理后台", nil, func(_ *menu.CallbackData) { app.OpenAdminInBrowser() })
-	fileMenu.AddText("发送测试通知", nil, func(_ *menu.CallbackData) { app.SendNativeNotice("LocalGateway", "桌面通知链路正常") })
+	fileMenu.AddText("发送测试通知", nil, func(_ *menu.CallbackData) { app.SendNativeNotice("灵枢", "桌面通知链路正常") })
 	fileMenu.AddSeparator()
 	fileMenu.AddText("退出", nil, func(_ *menu.CallbackData) { app.CloseWindow() })
 
@@ -88,14 +88,14 @@ func buildDesktopMenu(app *DesktopApp) *menu.Menu {
 
 func runDesktopTray(app *DesktopApp) {
 	go systray.Run(func() {
-		systray.SetTitle("LocalGateway")
-		systray.SetTooltip("LocalGateway 桌面版")
+		systray.SetTitle("灵枢")
+		systray.SetTooltip("灵枢桌面版")
 
 		showItem := systray.AddMenuItem("显示主窗口", "恢复并显示窗口")
 		hideItem := systray.AddMenuItem("隐藏到托盘", "隐藏主窗口")
 		openItem := systray.AddMenuItem("打开管理后台", "在浏览器中打开后台")
 		systray.AddSeparator()
-		quitItem := systray.AddMenuItem("退出程序", "关闭 LocalGateway")
+		quitItem := systray.AddMenuItem("退出程序", "关闭灵枢")
 
 		go func() {
 			for {
@@ -121,7 +121,7 @@ func main() {
 	runDesktopTray(desktopApp)
 
 	err := wails.Run(&options.App{
-		Title:            "LocalGateway",
+		Title:            "灵枢",
 		Width:            desktopApp.State.Width,
 		Height:           desktopApp.State.Height,
 		MinWidth:         960,
@@ -152,8 +152,8 @@ func main() {
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  true,
 			About: &mac.AboutInfo{
-				Title:   "LocalGateway",
-				Message: "本地 AI API 网关桌面版",
+				Title:   "灵枢",
+				Message: "本地模型网关桌面版",
 			},
 		},
 		OnStartup: func(ctx context.Context) {

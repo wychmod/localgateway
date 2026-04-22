@@ -9,11 +9,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
+	"gorm.io/gorm"
 
 	"localgateway/internal/admin"
 	"localgateway/internal/auth"
 	"localgateway/internal/config"
 	"localgateway/internal/provider"
+	"localgateway/internal/requestlog"
 	"localgateway/internal/routing"
 	"localgateway/internal/settings"
 	"localgateway/internal/usage"
@@ -22,15 +24,20 @@ import (
 )
 
 type Dependencies struct {
-	Config    config.Config
-	Logger    zerolog.Logger
-	Providers *provider.Service
-	Keys      *auth.Service
-	Routing   *routing.Service
-	Usage     *usage.Service
-	Settings  *settings.Service
-	Admin     *admin.Service
+	Config      config.Config
+	Logger      zerolog.Logger
+	Providers   *provider.Service
+	Keys        *auth.Service
+	Routing     *routing.Service
+	Usage       *usage.Service
+	Settings    *settings.Service
+	Admin       *admin.Service
+	RequestLogs *requestlog.Service
+	DB          *gorm.DB
 }
+
+
+
 
 type Router struct {
 	mux  chi.Router
@@ -63,6 +70,7 @@ func (r *Router) mount() {
 	r.mux.Post("/v1/messages", r.handleClaudeMessages)
 
 	r.mux.Route("/admin/api", func(adminRouter chi.Router) {
+		adminRouter.Get("/logs", r.handleAdminLogs)
 		adminRouter.Get("/overview", r.handleAdminOverview)
 
 		adminRouter.Get("/providers", r.handleProviders)

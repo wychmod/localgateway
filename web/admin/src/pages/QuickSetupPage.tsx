@@ -16,16 +16,16 @@ export function QuickSetupPage() {
       snippet: `{"apiUrl": "http://localhost:9090", "apiKey": "${currentKey.displayKey}"}`
     },
     {
-      name: "便携版分发包",
-      snippet: "下载 localgateway.zip → 解压 → 运行 localgateway.exe → 打开 /admin 完成剩余配置"
+      name: "灵枢便携分发包",
+      snippet: "下载 lingshu.zip → 解压 → 运行 lingshu.exe → 打开 /admin 完成剩余配置"
     }
   ];
 
   return (
     <section className="luxury-panel page-panel">
       <SectionHeader
-        eyebrow="快速接入"
-        title="下载后直接用，配置也尽量别让人费劲"
+        eyebrow="接入助手"
+        title="灵枢接入说明"
         description="面向 Codex、Claude Desktop、Cursor 等工具生成一键接入说明。"
         actions={
           <button
@@ -35,7 +35,7 @@ export function QuickSetupPage() {
               pushNotice({
                 tone: "success",
                 title: "配置校验通过",
-                message: "当前示例以本地网关地址和首个本地密钥生成，适合作为接入模板。"
+                message: "当前示例以灵枢本地网关地址和首个本地密钥生成，适合作为接入模板。"
               })
             }
           >

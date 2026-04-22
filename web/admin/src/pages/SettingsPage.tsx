@@ -63,7 +63,7 @@ export function SettingsPage() {
       <article className="luxury-panel page-panel distribution-panel">
         <SectionHeader eyebrow="分发设置" title="下载后直接用" description="单目录分发：拿到压缩包、解压、双击即可启动。" />
         <div className="distribution-stack">
-          <div className="metric-pill"><PackageOpen size={16} /> 分发包：localgateway.zip</div>
+          <div className="metric-pill"><PackageOpen size={16} /> 分发包：lingshu.zip</div>
           <div className="metric-pill">包含：主程序、配置文件、数据与日志目录</div>
           <div className="metric-pill">管理后台将内嵌至单一可执行文件</div>
           <div className="metric-pill">首次启动自动初始化数据库与默认配置</div>

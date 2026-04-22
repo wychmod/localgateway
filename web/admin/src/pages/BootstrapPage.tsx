@@ -14,10 +14,10 @@ export function BootstrapPage() {
     <section className="page-grid bootstrap-layout">
       <article className="luxury-panel page-panel">
         <SectionHeader
-          eyebrow="首次配置"
-          title="首次启动向导 / 初始化流程"
-          description="目标是让用户第一次打开就像安装一个成熟产品，而不是面对一堆空白配置。"
-          actions={<button type="button" className="primary-button"><Wand2 size={16} /> 开始向导</button>}
+          eyebrow="启用引导"
+          title="灵枢首次启用向导"
+          description="目标是让用户第一次打开灵枢时，感受到的是成熟产品，而不是一堆待填配置。"
+          actions={<button type="button" className="primary-button"><Wand2 size={16} /> 开始启用</button>}
         />
         <div className="wizard-step-list">
           {setupSteps.map((step, index) => (

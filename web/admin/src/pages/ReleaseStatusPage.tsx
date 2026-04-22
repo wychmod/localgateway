@@ -20,7 +20,7 @@ export function ReleaseStatusPage() {
           actions={<button type="button" className="primary-button"><Download size={16} /> 构建便携版</button>}
         />
         <div className="status-grid">
-          <div className="metric-pill"><PackageCheck size={16} /> 分发包：localgateway.zip</div>
+          <div className="metric-pill"><PackageCheck size={16} /> 分发包：lingshu.zip</div>
           <div className="metric-pill">版本号：0.1.0-alpha</div>
           <div className="metric-pill">分发方式：便携版 · 下载即用</div>
           <div className="metric-pill"><TimerReset size={16} /> 发布状态：尚未就绪</div>

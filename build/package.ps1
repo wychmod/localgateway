@@ -1,13 +1,13 @@
-# LocalGateway Portable Package Builder
+# 灵枢 Portable Package Builder
 # Usage: powershell -File build/package.ps1
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$OutputDir   = Join-Path $ProjectRoot "build\portable\LocalGateway"
+$OutputDir   = Join-Path $ProjectRoot "build\portable\Lingshu"
 $PythonExe   = "C:\Users\Administrator.SY-202401060959\.workbuddy\binaries\python\envs\default\Scripts\python.exe"
 $GoVersionInfoExe = Join-Path $env:USERPROFILE "go\bin\goversioninfo.exe"
 
-Write-Host "=== LocalGateway Portable Package Builder ===" -ForegroundColor Cyan
+Write-Host "=== 灵枢 Portable Package Builder ===" -ForegroundColor Cyan
 
 # Step 1: Generate app icons
 Write-Host "[1/5] Generating app icons..." -ForegroundColor Yellow
@@ -35,7 +35,7 @@ Copy-Item -Path (Join-Path $ProjectRoot "web\admin\dist\*") -Destination $EmbedD
 # Step 4: Build Go binary
 Write-Host "[4/5] Building Go binary..." -ForegroundColor Yellow
 Push-Location $ProjectRoot
-go build -ldflags="-H windowsgui" -o localgateway.exe ./cmd/localgateway
+go build -ldflags="-H windowsgui" -o lingshu.exe ./cmd/localgateway
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed!" -ForegroundColor Red; exit 1 }
 Pop-Location
 
@@ -45,7 +45,7 @@ if (Test-Path $OutputDir) { Remove-Item $OutputDir -Recurse -Force }
 New-Item -ItemType Directory -Path "$OutputDir\data" -Force | Out-Null
 New-Item -ItemType Directory -Path "$OutputDir\logs" -Force | Out-Null
 
-Copy-Item (Join-Path $ProjectRoot "localgateway.exe") $OutputDir -Force
+Copy-Item (Join-Path $ProjectRoot "lingshu.exe") $OutputDir -Force
 Copy-Item (Join-Path $ProjectRoot "configs\config.example.yaml") (Join-Path $OutputDir "config.yaml") -Force
 New-Item -ItemType File -Path "$OutputDir\data\.gitkeep" -Force | Out-Null
 New-Item -ItemType File -Path "$OutputDir\logs\.gitkeep" -Force | Out-Null
@@ -55,3 +55,4 @@ Write-Host "=== Build Complete ===" -ForegroundColor Green
 Write-Host "Output: $OutputDir" -ForegroundColor White
 Write-Host ""
 Get-ChildItem $OutputDir -Recurse | Select-Object FullName
+

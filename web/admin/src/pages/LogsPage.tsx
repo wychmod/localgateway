@@ -1,28 +1,49 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Search } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 
-const logs = [
-  { id: "log-1", time: "12:01:08", path: "/v1/chat/completions", provider: "OpenAI 主线路", latency: "184 毫秒", status: "成功", detail: "Codex 正常流式返回" },
-  { id: "log-2", time: "12:02:14", path: "/v1/messages", provider: "Claude 高级线路", latency: "246 毫秒", status: "成功", detail: "Claude Desktop 正常完成" },
-  { id: "log-3", time: "12:03:50", path: "/v1/chat/completions", provider: "Azure 备用线路", latency: "528 毫秒", status: "已切换备用", detail: "OpenAI 主线路超时，已自动切到 Azure 备用线路" },
-  { id: "log-4", time: "12:05:19", path: "/v1/models", provider: "网关服务", latency: "32 毫秒", status: "成功", detail: "模型列表刷新" }
-];
+type LogItem = {
+  id: string;
+  path: string;
+  provider_id: string;
+  latency_ms: number;
+  status_label: string;
+  detail: string;
+  trace_id: string;
+  fallback_used: boolean;
+  fallback_tried: string[];
+  created_at: string;
+  metadata: Record<string, unknown>;
+};
 
 export function LogsPage() {
   const [query, setQuery] = useState("");
   const [onlyFallback, setOnlyFallback] = useState(false);
-  const [selectedId, setSelectedId] = useState(logs[0].id);
+  const [logs, setLogs] = useState<LogItem[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
-  const filtered = useMemo(() => {
-    return logs.filter((item) => {
-      const matchedText = [item.path, item.provider, item.status, item.detail].join(" ").toLowerCase();
-      const byQuery = matchedText.includes(query.toLowerCase());
-      const byFallback = onlyFallback ? item.status === "已切换备用" : true;
-      return byQuery && byFallback;
-    });
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    if (query) params.set("query", query);
+    if (onlyFallback) params.set("only_fallback", "true");
+    params.set("limit", "100");
+
+    setLoading(true);
+    fetch(`/admin/api/logs?${params.toString()}`, { signal: controller.signal })
+      .then((res) => res.json())
+      .then((payload) => {
+        const items = (payload.data ?? []) as LogItem[];
+        setLogs(items);
+        setSelectedId((current) => current || items[0]?.id || "");
+      })
+      .finally(() => setLoading(false));
+
+    return () => controller.abort();
   }, [query, onlyFallback]);
 
+  const filtered = useMemo(() => logs, [logs]);
   const active = filtered.find((item) => item.id === selectedId) ?? filtered[0];
 
   return (
@@ -31,38 +52,42 @@ export function LogsPage() {
         <SectionHeader
           eyebrow="运行日志"
           title="异常流 · 备用切换 · 请求详情"
-          description="不只是看流水，还要帮你定位问题。"
+          description="现在这里展示的已经是 RequestLog 里的真实请求链路，而不再是演示数据。"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${onlyFallback ? "active-chip" : ""}`} onClick={() => setOnlyFallback((value) => !value)}>
                 <AlertTriangle size={14} /> 只看备用切换
               </button>
-              <button type="button" className="ghost-button compact">导出日志</button>
             </>
           }
         />
 
         <div className="context-strip">
           <div className="metric-pill">匹配结果 {filtered.length}</div>
-          <div className="metric-pill">备用切换 {logs.filter((item) => item.status === "已切换备用").length}</div>
+          <div className="metric-pill">备用切换 {filtered.filter((item) => item.fallback_used).length}</div>
           <div className="metric-pill">搜索状态 {query ? "已筛选" : "全部"}</div>
         </div>
 
         <label className="search-box">
           <span><Search size={16} /></span>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="按路径、厂商、状态、详情搜索" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="按路径、trace、fallback、错误信息搜索" />
         </label>
 
-        {filtered.length ? (
+        {loading ? (
+          <article className="luxury-panel nested-panel empty-state-card">
+            <strong>日志加载中</strong>
+            <p>正在读取真实请求日志…</p>
+          </article>
+        ) : filtered.length ? (
           <div className="stack-list">
             {filtered.map((log) => (
               <button key={log.id} type="button" className={`select-card ${active?.id === log.id ? "active" : ""}`} onClick={() => setSelectedId(log.id)}>
                 <div>
                   <strong>{log.path}</strong>
-                  <span>{log.provider} · {log.time}</span>
-                  <small>{log.latency} · {log.detail}</small>
+                  <span>{log.provider_id} · {new Date(log.created_at).toLocaleTimeString()}</span>
+                  <small>{log.latency_ms} 毫秒 · {log.detail}</small>
                 </div>
-                <span className={`status-pill ${log.status === "已切换备用" ? "warning" : "healthy"}`}>{log.status}</span>
+                <span className={`status-pill ${log.fallback_used ? "warning" : log.status_label === "失败" ? "warning" : "healthy"}`}>{log.status_label}</span>
               </button>
             ))}
           </div>
@@ -75,20 +100,25 @@ export function LogsPage() {
       </article>
 
       <article className="luxury-panel page-panel detail-panel">
-        <SectionHeader eyebrow="日志详情" title={active?.path ?? "暂无结果"} description="请求详情、问题原因与相关链路。" />
+        <SectionHeader eyebrow="日志详情" title={active?.path ?? "暂无结果"} description="请求详情、trace、fallback 原因与相关链路。" />
         {active ? (
           <div className="detail-stack">
-            <div className="metric-pill">时间：{active.time}</div>
-            <div className="metric-pill">厂商：{active.provider}</div>
-            <div className="metric-pill">耗时：{active.latency}</div>
-            <div className="metric-pill">状态：{active.status}</div>
+            <div className="metric-pill">时间：{new Date(active.created_at).toLocaleString()}</div>
+            <div className="metric-pill">厂商：{active.provider_id}</div>
+            <div className="metric-pill">耗时：{active.latency_ms} 毫秒</div>
+            <div className="metric-pill">状态：{active.status_label}</div>
+            <div className="metric-pill">Trace：{active.trace_id || "暂无"}</div>
             <article className="luxury-panel nested-panel detail-card">
               <strong>详细说明</strong>
               <p>{active.detail}</p>
             </article>
             <article className="luxury-panel nested-panel detail-card">
               <strong>调用链路</strong>
-              <p>主链路 → 重试 → 备用切换路径已预留，后续联调后会展示真实调用栈。</p>
+              <p>请求格式：{String(active.metadata?.apiFormat ?? "unknown")}</p>
+              <p>请求模型：{String(active.metadata?.requestedModel ?? "unknown")}</p>
+              <p>实际模型：{String(active.metadata?.actualModel ?? "unknown")}</p>
+              <p>主 Provider：{String(active.metadata?.provider ?? active.provider_id)}</p>
+              <p>Fallback 尝试：{active.fallback_tried?.length ? active.fallback_tried.join(" → ") : "无"}</p>
             </article>
           </div>
         ) : (

@@ -20,16 +20,16 @@ type Decision struct {
 }
 
 type RuleInput struct {
-	ModelPattern string   `json:"model_pattern"`
-	Strategy     string   `json:"strategy"`
+	ModelPattern  string   `json:"model_pattern"`
+	Strategy      string   `json:"strategy"`
 	ProviderChain []string `json:"provider_chain"`
 	FallbackChain []string `json:"fallback_chain"`
-	Enabled      bool     `json:"enabled"`
+	Enabled       bool     `json:"enabled"`
 }
 
 type AliasInput struct {
-	Alias        string   `json:"alias"`
-	Target       string   `json:"target"`
+	Alias         string   `json:"alias"`
+	Target        string   `json:"target"`
 	FallbackChain []string `json:"fallback_chain"`
 }
 
@@ -68,14 +68,7 @@ func (s *Service) ListRules(ctx context.Context) ([]models.RoutingRule, error) {
 }
 
 func (s *Service) CreateRule(ctx context.Context, input RuleInput) (models.RoutingRule, error) {
-	rule := models.RoutingRule{
-		ID:            "route_" + uuid.NewString(),
-		ModelPattern:  input.ModelPattern,
-		Strategy:      input.Strategy,
-		ProviderChain: toJSON(input.ProviderChain),
-		FallbackChain: toJSON(input.FallbackChain),
-		Enabled:       input.Enabled,
-	}
+	rule := models.RoutingRule{ID: "route_" + uuid.NewString(), ModelPattern: input.ModelPattern, Strategy: input.Strategy, ProviderChain: toJSON(input.ProviderChain), FallbackChain: toJSON(input.FallbackChain), Enabled: input.Enabled}
 	if err := s.db.WithContext(ctx).Create(&rule).Error; err != nil {
 		return models.RoutingRule{}, err
 	}
@@ -125,17 +118,20 @@ func (s *Service) UpsertAlias(ctx context.Context, input AliasInput) (models.Mod
 }
 
 func (s *Service) Decide(ctx context.Context, model string) (*Decision, error) {
-	resolved := s.resolveAlias(ctx, model)
-	selected, err := s.providers.ResolveByModel(ctx, resolved)
+	resolved, aliasFallback := s.resolveAlias(ctx, model)
+	ruleProviderChain, ruleFallback := s.matchRule(ctx, resolved)
+
+	selected, err := s.selectProvider(ctx, resolved, ruleProviderChain)
 	if err != nil {
 		return nil, err
 	}
-	return &Decision{
-		Strategy: s.strategy,
-		Provider: *selected,
-		Model:    resolved,
-		Fallback: []string{"azure-backup", "openrouter-fallback"},
-	}, nil
+
+	fallback := ruleFallback
+	if len(fallback) == 0 {
+		fallback = aliasFallback
+	}
+
+	return &Decision{Strategy: s.strategy, Provider: *selected, Model: resolved, Fallback: fallback}, nil
 }
 
 func (s *Service) Simulate(ctx context.Context, input TestInput) (TestResult, error) {
@@ -143,27 +139,86 @@ func (s *Service) Simulate(ctx context.Context, input TestInput) (TestResult, er
 	if err != nil {
 		return TestResult{}, err
 	}
-	return TestResult{
-		ResolvedModel: decision.Model,
-		ProviderID:    decision.Provider.ID,
-		Strategy:      decision.Strategy,
-		FallbackChain: decision.Fallback,
-		EstimatedCost: "$0.012 - $0.024",
-		EstimatedTTFT: "180ms - 260ms",
-	}, nil
+	return TestResult{ResolvedModel: decision.Model, ProviderID: decision.Provider.ID, Strategy: decision.Strategy, FallbackChain: decision.Fallback, EstimatedCost: "$0.012 - $0.024", EstimatedTTFT: "180ms - 260ms"}, nil
 }
 
-func (s *Service) resolveAlias(ctx context.Context, model string) string {
+func (s *Service) resolveAlias(ctx context.Context, model string) (string, []string) {
 	var aliases []models.ModelAlias
 	if err := s.db.WithContext(ctx).Find(&aliases).Error; err != nil {
-		return model
+		return model, nil
 	}
 	for _, alias := range aliases {
 		if strings.EqualFold(alias.Alias, model) {
-			return alias.Target
+			return alias.Target, decodeJSONList(alias.FallbackChain)
 		}
 	}
-	return model
+	return model, nil
+}
+
+func (s *Service) matchRule(ctx context.Context, model string) ([]string, []string) {
+	rules, err := s.ListRules(ctx)
+	if err != nil {
+		return nil, nil
+	}
+	for _, rule := range rules {
+		if !rule.Enabled {
+			continue
+		}
+		if wildcardMatch(rule.ModelPattern, model) {
+			return decodeJSONList(rule.ProviderChain), decodeJSONList(rule.FallbackChain)
+		}
+	}
+	return nil, nil
+}
+
+func (s *Service) selectProvider(ctx context.Context, model string, preferred []string) (*models.Provider, error) {
+	if len(preferred) == 0 {
+		return s.providers.ResolveByModel(ctx, model)
+	}
+	providers, err := s.providers.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, providerID := range preferred {
+		for _, item := range providers {
+			if strings.EqualFold(item.ID, providerID) && item.Enabled && item.Status != "disabled" && item.Status != "deleted" && supportsModelJSON(item.ModelsJSON, model) {
+				provider := item
+				return &provider, nil
+			}
+		}
+	}
+	return s.providers.ResolveByModel(ctx, model)
+}
+
+func wildcardMatch(pattern string, value string) bool {
+	if pattern == "" || pattern == "*" {
+		return true
+	}
+	if strings.HasSuffix(pattern, "*") {
+		return strings.HasPrefix(strings.ToLower(value), strings.ToLower(strings.TrimSuffix(pattern, "*")))
+	}
+	return strings.EqualFold(pattern, value)
+}
+
+func decodeJSONList(raw string) []string {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	var items []string
+	_ = json.Unmarshal([]byte(raw), &items)
+	return items
+}
+
+func supportsModelJSON(modelsJSON string, target string) bool {
+	if strings.TrimSpace(modelsJSON) == "" {
+		return true
+	}
+	for _, item := range decodeJSONList(modelsJSON) {
+		if strings.EqualFold(item, target) {
+			return true
+		}
+	}
+	return false
 }
 
 func toJSON(values []string) string {
@@ -173,3 +228,4 @@ func toJSON(values []string) string {
 	data, _ := json.Marshal(values)
 	return string(data)
 }
+

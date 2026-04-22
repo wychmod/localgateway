@@ -287,8 +287,6 @@ th, td { text-align: left; padding: 16px 12px; border-bottom: 1px solid rgba(255
   padding-top: 14px;
 }
 
-  .routing-layout, .analytics-workbench, .logs-layout, .bootstrap-layout, .release-layout, .security-layout { grid-template-columns: 1fr; }
-}
 
 @media (max-width: 1180px) {
   .app-shell { grid-template-columns: 1fr; }

@@ -6,9 +6,9 @@ export function SecurityPage() {
     <section className="page-grid split-layout security-layout">
       <article className="luxury-panel page-panel">
         <SectionHeader
-          eyebrow="安全设置"
-          title="登录与安全入口"
-          description="把管理员登录、默认安全策略和后续会话能力都放到显性入口里。"
+          eyebrow="安全中心"
+          title="登录保护与安全基线"
+          description="把管理员登录、默认安全策略和后续会话能力统一收口到灵枢的安全入口。"
           actions={<button type="button" className="primary-button"><LockKeyhole size={16} /> 立即登录</button>}
         />
         <div className="form-grid">

@@ -9,7 +9,7 @@ const fallbackStatus: DesktopStatus = {
   platform: "web",
   serverAddr: "",
   adminUrl: "",
-  windowTitle: "LocalGateway",
+  windowTitle: "灵枢",
   desktopMode: false,
   notifications: false,
   customChrome: false

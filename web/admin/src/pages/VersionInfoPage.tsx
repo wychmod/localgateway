@@ -38,9 +38,9 @@ export function VersionInfoPage() {
     <section className="page-grid version-layout">
       <article className="luxury-panel page-panel">
         <SectionHeader
-          eyebrow="版本信息"
-          title="版本信息与当前产品状态"
-          description="把当前阶段、发布通道、提交基线和安全状态展示清楚，方便你判断什么时候可以往外发。"
+          eyebrow="版本概览"
+          title="灵枢版本与产品状态"
+          description="把当前阶段、发布通道、提交基线和安全状态展示清楚，方便判断什么时候可以对外分发。"
         />
         <div className="stats-grid version-grid">
           {versionBlocks.map((item) => {

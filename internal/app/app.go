@@ -10,6 +10,7 @@ import (
 	"localgateway/internal/auth"
 	"localgateway/internal/config"
 	"localgateway/internal/provider"
+	"localgateway/internal/requestlog"
 	"localgateway/internal/routing"
 	"localgateway/internal/server"
 	"localgateway/internal/settings"
@@ -18,20 +19,20 @@ import (
 )
 
 type Application struct {
-	Config         config.Config
-	Router         *server.Router
-	Logger         zerolog.Logger
-	DB             *gorm.DB
-	Providers      *provider.Service
-	Keys           *auth.Service
-	Routing        *routing.Service
-	Usage          *usage.Service
-	Settings       *settings.Service
-	Admin          *admin.Service
+	Config      config.Config
+	Router      *server.Router
+	Logger      zerolog.Logger
+	DB          *gorm.DB
+	Providers   *provider.Service
+	Keys        *auth.Service
+	Routing     *routing.Service
+	Usage       *usage.Service
+	Settings    *settings.Service
+	Admin       *admin.Service
+	RequestLogs *requestlog.Service
 }
 
 func New() (*Application, error) {
-	// Resolve config path: explicit LG_CONFIG env var > config.yaml in cwd > default example
 	cfgPath := os.Getenv("LG_CONFIG")
 	if cfgPath == "" {
 		if _, err := os.Stat("config.yaml"); err == nil {
@@ -47,7 +48,6 @@ func New() (*Application, error) {
 	}
 
 	logger := zerolog.New(os.Stdout).With().Timestamp().Str("service", "localgateway").Logger()
-
 	db, err := storage.OpenDatabase(cfg.Database)
 	if err != nil {
 		return nil, err
@@ -56,31 +56,36 @@ func New() (*Application, error) {
 	providerService := provider.NewService(db)
 	keyService := auth.NewService(db)
 	usageService := usage.NewService(db)
+	requestLogService := requestlog.NewService(db)
 	routingService := routing.NewService(db, providerService, cfg.Routing.DefaultStrategy)
 	settingsService := settings.NewService(db)
 	adminService := admin.NewService(providerService, keyService, usageService, routingService, settingsService)
 
-	router := server.NewRouter(server.Dependencies{
-		Config:    cfg,
-		Logger:    logger,
-		Providers: providerService,
-		Keys:      keyService,
-		Routing:   routingService,
-		Usage:     usageService,
-		Settings:  settingsService,
-		Admin:     adminService,
+	application := &Application{
+		Config:      cfg,
+		Logger:      logger,
+		DB:          db,
+		Providers:   providerService,
+		Keys:        keyService,
+		Routing:     routingService,
+		Usage:       usageService,
+		Settings:    settingsService,
+		Admin:       adminService,
+		RequestLogs: requestLogService,
+	}
+
+	application.Router = server.NewRouter(server.Dependencies{
+		Config:      cfg,
+		Logger:      logger,
+		Providers:   providerService,
+		Keys:        keyService,
+		Routing:     routingService,
+		Usage:       usageService,
+		Settings:    settingsService,
+		Admin:       adminService,
+		RequestLogs: requestLogService,
+		DB:          db,
 	})
 
-	return &Application{
-		Config:    cfg,
-		Router:    router,
-		Logger:    logger,
-		DB:        db,
-		Providers: providerService,
-		Keys:      keyService,
-		Routing:   routingService,
-		Usage:     usageService,
-		Settings:  settingsService,
-		Admin:     adminService,
-	}, nil
+	return application, nil
 }

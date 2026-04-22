@@ -1,7 +1,7 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "localgateway",
-  "outputfilename": "LocalGateway",
+  "name": "lingshu",
+  "outputfilename": "Lingshu",
   "frontend": {
     "dir": "frontend",
     "install": "npm install",
@@ -12,14 +12,15 @@
   "assetdir": "frontend/dist",
   "wailsjsdir": "frontend/src",
   "author": {
-    "name": "LocalGateway Team",
-    "email": "team@localgateway.dev"
+    "name": "Lingshu Team",
+    "email": "team@lingshu.dev"
   },
   "info": {
-    "companyName": "LocalGateway",
-    "productName": "LocalGateway",
+    "companyName": "Lingshu",
+    "productName": "灵枢",
     "productVersion": "2.0.0",
-    "copyright": "Copyright LocalGateway Team",
-    "comments": "本地 AI API 网关桌面版"
+    "copyright": "Copyright Lingshu Team",
+    "comments": "灵枢本地模型网关桌面版"
   }
 }
+
