@@ -76,15 +76,14 @@ export function LogsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="运行日志"
-          title="异常流 · 备用切换 · 请求详情"
-          description="这里已经支持时间范围、trace 搜索，以及按当前筛选结果导出日志。"
+          title="日志检索"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${onlyFallback ? "active-chip" : ""}`} onClick={() => setOnlyFallback((value) => !value)}>
-                <AlertTriangle size={14} /> 只看备用切换
+                <AlertTriangle size={14} /> 备用切换
               </button>
               <button type="button" className="ghost-button compact" onClick={handleExport}>
-                <Download size={14} /> 导出日志
+                <Download size={14} /> 导出
               </button>
             </>
           }
@@ -135,7 +134,7 @@ export function LogsPage() {
       </article>
 
       <article className="luxury-panel page-panel detail-panel">
-        <SectionHeader eyebrow="日志详情" title={active?.path ?? "暂无结果"} description="请求详情、trace、fallback 原因与相关链路。" />
+        <SectionHeader eyebrow="日志详情" title={active?.path ?? "暂无结果"} />
         {active ? (
           <div className="detail-stack">
             <div className="metric-pill">时间：{new Date(active.created_at).toLocaleString()}</div>

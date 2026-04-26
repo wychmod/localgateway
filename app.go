@@ -15,6 +15,7 @@ import (
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"localgateway/internal/app"
+	"localgateway/internal/paths"
 )
 
 const desktopVersion = "2.3.0"
@@ -185,7 +186,9 @@ func (d *DesktopApp) RunSelfCheck() DesktopSelfCheck {
 		health = "warning"
 	}
 	result := DesktopSelfCheck{Health: health, Checks: checks, Warnings: warnings, CompletedAt: time.Now().Format(time.RFC3339), ServerReachable: serverReachable}
-	wailsruntime.EventsEmit(d.ctx, "desktop:self-check", result)
+	if d.ctx != nil {
+		wailsruntime.EventsEmit(d.ctx, "desktop:self-check", result)
+	}
 	return result
 }
 
@@ -214,20 +217,34 @@ func (d *DesktopApp) RestoreLastRoute() string {
 	return d.State.LastRoute
 }
 func (d *DesktopApp) HideToTray() {
+	if d.ctx == nil {
+		return
+	}
 	d.State.HiddenToTray = true
 	d.persistWindowState()
 	wailsruntime.WindowHide(d.ctx)
 	wailsruntime.EventsEmit(d.ctx, "desktop:window-hidden", d.State)
 }
 func (d *DesktopApp) ShowMainWindow() {
+	if d.ctx == nil {
+		return
+	}
 	d.State.HiddenToTray = false
 	d.persistWindowState()
 	wailsruntime.WindowShow(d.ctx)
 	wailsruntime.WindowUnminimise(d.ctx)
 	wailsruntime.EventsEmit(d.ctx, "desktop:window-shown", d.State)
 }
-func (d *DesktopApp) MinimiseWindow() { wailsruntime.WindowMinimise(d.ctx) }
+func (d *DesktopApp) MinimiseWindow() {
+	if d.ctx == nil {
+		return
+	}
+	wailsruntime.WindowMinimise(d.ctx)
+}
 func (d *DesktopApp) ToggleMaximiseWindow() {
+	if d.ctx == nil {
+		return
+	}
 	d.State.Maximised = !d.State.Maximised
 	d.persistWindowState()
 	wailsruntime.WindowToggleMaximise(d.ctx)
@@ -241,12 +258,18 @@ func (d *DesktopApp) CloseWindow() {
 	wailsruntime.Quit(d.ctx)
 }
 func (d *DesktopApp) OpenAdminInBrowser() {
+	if d.ctx == nil {
+		return
+	}
 	status := d.GetDesktopStatus()
 	if status.AdminURL != "" {
 		wailsruntime.BrowserOpenURL(d.ctx, status.AdminURL)
 	}
 }
 func (d *DesktopApp) SendNativeNotice(title string, message string) {
+	if d.ctx == nil {
+		return
+	}
 	if title == "" {
 		title = "灵枢"
 	}
@@ -348,15 +371,19 @@ func (d *DesktopApp) persistWindowState() {
 	}
 }
 func desktopStatePath() string {
-	baseDir, err := os.UserConfigDir()
+	appPaths, err := paths.Resolve()
 	if err != nil {
 		return "desktop-state.json"
 	}
-	return filepath.Join(baseDir, "Lingshu", "desktop-state.json")
+	return filepath.Join(appPaths.ConfigDir, "desktop-state.json")
 }
 func loadDesktopWindowState() DesktopWindowState {
 	state := defaultDesktopWindowState()
-	data, err := os.ReadFile(desktopStatePath())
+	statePath := desktopStatePath()
+	if !fileExists(statePath) {
+		migrateLegacyDesktopState(statePath)
+	}
+	data, err := os.ReadFile(statePath)
 	if err != nil {
 		return state
 	}
@@ -371,6 +398,26 @@ func loadDesktopWindowState() DesktopWindowState {
 		state.Height = 860
 	}
 	return state
+}
+func migrateLegacyDesktopState(targetPath string) {
+	baseDir, err := os.UserConfigDir()
+	if err != nil {
+		return
+	}
+	legacyPath := filepath.Join(baseDir, "Lingshu", "desktop-state.json")
+	if !fileExists(legacyPath) {
+		return
+	}
+	_ = os.MkdirAll(filepath.Dir(targetPath), 0o755)
+	data, err := os.ReadFile(legacyPath)
+	if err != nil {
+		return
+	}
+	_ = os.WriteFile(targetPath, data, 0o644)
+}
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
 }
 func deriveDesktopHealth(providers int, keys int) string {
 	if providers == 0 || keys == 0 {

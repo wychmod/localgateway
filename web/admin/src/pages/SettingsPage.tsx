@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Download, PackageOpen, Save } from "lucide-react";
+import { Download, PackageOpen, RefreshCw, Save } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAdminStore } from "../store/admin-store";
 
 export function SettingsPage() {
-  const { settings, saveSettings, backupSettings } = useAdminStore();
+  const { settings, distributionPlan, saveSettings, backupSettings, reloadDistributionPlan } = useAdminStore();
   const [form, setForm] = useState(settings);
 
   useEffect(() => {
@@ -16,9 +16,8 @@ export function SettingsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="系统设置"
-          title="系统配置 · 全前端收口"
-          description="端口、认证、日志、更新、备份和主题都不需要手动改配置文件。"
-          actions={<button type="button" className="primary-button" onClick={() => void saveSettings(form)}><Save size={16} /> 保存设置</button>}
+          title="系统配置"
+          actions={<button type="button" className="primary-button" onClick={() => void saveSettings(form)}><Save size={16} /> 保存</button>}
         />
         <div className="form-grid">
           <label>
@@ -69,12 +68,22 @@ export function SettingsPage() {
       </article>
 
       <article className="luxury-panel page-panel distribution-panel">
-        <SectionHeader eyebrow="分发设置" title="下载后直接用" description="单目录分发：拿到压缩包、解压、双击即可启动。" />
+        <SectionHeader
+          eyebrow="分发设置"
+          title="分发包"
+          actions={
+            <button type="button" className="ghost-button compact" onClick={() => void reloadDistributionPlan()}>
+              <RefreshCw size={14} /> 刷新
+            </button>
+          }
+        />
         <div className="distribution-stack">
-          <div className="metric-pill"><PackageOpen size={16} /> 分发包：lingshu.zip</div>
-          <div className="metric-pill">包含：主程序、配置文件、数据与日志目录</div>
-          <div className="metric-pill">管理后台将内嵌至单一可执行文件</div>
-          <div className="metric-pill">首次启动自动初始化数据库与默认配置</div>
+          <div className="metric-pill"><PackageOpen size={16} /> 分发包：{distributionPlan?.package_name ?? "lingshu.zip"}</div>
+          <div className="metric-pill">包含：{(distributionPlan?.includes ?? ["主程序", "配置文件", "数据与日志目录"]).join(" / ")}</div>
+          <div className="metric-pill">模式：{distributionPlan?.mode ?? "单目录分发"}</div>
+          {distributionPlan?.notes?.map((note) => (
+            <div key={note} className="metric-pill">{note}</div>
+          ))}
           <div className="inline-actions">
             <button type="button" className="ghost-button" onClick={() => void backupSettings()}><Download size={16} /> 导出打包说明</button>
             <button type="button" className="ghost-button" onClick={() => void backupSettings()}>生成便携版安装包</button>
@@ -84,3 +93,4 @@ export function SettingsPage() {
     </section>
   );
 }
+

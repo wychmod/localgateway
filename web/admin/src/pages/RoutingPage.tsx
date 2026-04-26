@@ -5,6 +5,13 @@ import { SectionHeader } from "../components/SectionHeader";
 import { RoutingSimulation } from "../store/entities";
 import { useAdminStore } from "../store/admin-store";
 
+import { useEffect, useMemo, useState } from "react";
+import { Activity, Route, Trash2 } from "lucide-react";
+import { DrawerCard } from "../components/DrawerCard";
+import { SectionHeader } from "../components/SectionHeader";
+import { RoutingSimulation } from "../store/entities";
+import { useAdminStore } from "../store/admin-store";
+
 const createEmptyRule = () => ({
   id: `route-${Date.now()}`,
   modelPattern: "new-model-*",
@@ -15,7 +22,7 @@ const createEmptyRule = () => ({
 });
 
 export function RoutingPage() {
-  const { rules, saveRule, testRouting, pushNotice } = useAdminStore();
+  const { rules, saveRule, deleteRule, testRouting, pushNotice } = useAdminStore();
   const [selectedId, setSelectedId] = useState(rules[0]?.id);
   const active = useMemo(() => rules.find((item) => item.id === selectedId) ?? rules[0], [rules, selectedId]);
   const [form, setForm] = useState(active ?? createEmptyRule());
@@ -40,8 +47,7 @@ export function RoutingPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="路由策略"
-          title="策略配置与路由模拟"
-          description="直接改、直接测、直接验证备用链路。"
+          title="策略配置"
           actions={
             <button
               type="button"
@@ -50,11 +56,7 @@ export function RoutingPage() {
                 const next = createEmptyRule();
                 setSelectedId(next.id);
                 setForm(next);
-                pushNotice({
-                  tone: "info",
-                  title: "新规则草稿已创建",
-                  message: "先确定模型匹配方式，再补链路和备用顺序，会更稳。"
-                });
+                pushNotice({ tone: "info", title: "新建规则", message: "配置模型匹配和链路后保存。" });
               }}
             >
               新建规则
@@ -120,11 +122,14 @@ export function RoutingPage() {
           >
             <Route size={16} /> 验证链路
           </button>
+          <button type="button" className="ghost-button danger" onClick={() => void deleteRule(form.id)}>
+            <Trash2 size={16} /> 删除规则
+          </button>
         </div>
       </DrawerCard>
 
       <article className="luxury-panel page-panel simulation-panel">
-        <SectionHeader eyebrow="路由模拟" title="路由测试器" description="给定模型、密钥和请求格式，直接查看分发目标。" />
+        <SectionHeader eyebrow="路由模拟" title="路由测试器" />
         <div className="form-grid" style={{ marginBottom: 16 }}>
           <label>
             <span>测试模型</span>
@@ -152,3 +157,4 @@ export function RoutingPage() {
     </section>
   );
 }
+

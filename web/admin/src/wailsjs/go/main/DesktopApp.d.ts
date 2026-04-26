@@ -17,6 +17,8 @@ export function GetWindowState():Promise<main.DesktopWindowState>;
 
 export function HideToTray():Promise<void>;
 
+export function IsQuitting():Promise<boolean>;
+
 export function MinimiseWindow():Promise<void>;
 
 export function OpenAdminInBrowser():Promise<void>;
@@ -30,6 +32,8 @@ export function SaveWindowState(arg1:main.DesktopWindowState):Promise<main.Deskt
 export function SendNativeNotice(arg1:string,arg2:string):Promise<void>;
 
 export function ShowMainWindow():Promise<void>;
+
+export function Shutdown(arg1:context.Context):Promise<void>;
 
 export function Startup(arg1:context.Context):Promise<void>;
 

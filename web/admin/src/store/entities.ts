@@ -52,6 +52,21 @@ export type RoutingRuleRecord = {
   enabled: boolean;
 };
 
+export type ModelAliasRecord = {
+  id?: string;
+  alias: string;
+  target: string;
+  fallback_chain?: string;
+  fallbackChain: string[];
+};
+
+export type DistributionPlanRecord = {
+  package_name?: string;
+  mode?: string;
+  includes?: string[];
+  notes?: string[];
+};
+
 export type RoutingSimulation = {
   model: string;
   key: string;

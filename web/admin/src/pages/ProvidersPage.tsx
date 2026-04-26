@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, RefreshCcw, Wifi } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, RefreshCcw, Trash2, Wifi } from "lucide-react";
 import { DrawerCard } from "../components/DrawerCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAdminStore } from "../store/admin-store";
@@ -18,7 +18,17 @@ const emptyProvider = (count: number) => ({
 });
 
 export function ProvidersPage() {
-  const { providers, selectedProviderId, setSelectedProvider, saveProvider, testProvider, discoverProviderModels, pushNotice } = useAdminStore();
+  const {
+    providers,
+    selectedProviderId,
+    setSelectedProvider,
+    saveProvider,
+    deleteProvider,
+    reorderProviders,
+    testProvider,
+    discoverProviderModels,
+    pushNotice
+  } = useAdminStore();
   const active = useMemo(
     () => providers.find((item) => item.id === selectedProviderId) ?? providers[0],
     [providers, selectedProviderId]
@@ -34,13 +44,21 @@ export function ProvidersPage() {
   const modelsText = form.models.join(", ");
   const hasUnsavedChanges = JSON.stringify(form) !== JSON.stringify(active ?? {});
 
+  const moveProvider = (id: string, direction: -1 | 1) => {
+    const currentIndex = providers.findIndex((provider) => provider.id === id);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= providers.length) return;
+    const next = [...providers];
+    [next[currentIndex], next[nextIndex]] = [next[nextIndex], next[currentIndex]];
+    void reorderProviders(next.map((provider) => provider.id));
+  };
+
   return (
     <section className="page-grid split-layout">
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="厂商接入"
-          title="厂商管理 · 接入 · 调优"
-          description="新增、编辑、测试连接和模型发现都收口在这里。"
+          title="厂商管理"
           actions={
             <>
               <button
@@ -50,14 +68,10 @@ export function ProvidersPage() {
                   const next = emptyProvider(providers.length);
                   setSelectedProvider(next.id);
                   setForm(next);
-                  pushNotice({
-                    tone: "info",
-                    title: "已进入新建模式",
-                    message: "先填写接入地址、模型和速率限制，再进行保存。"
-                  });
+                  pushNotice({ tone: "info", title: "新建厂商", message: "填写接入地址后保存。" });
                 }}
               >
-                <Plus size={16} /> 新建厂商
+                <Plus size={16} /> 新建
               </button>
               <button
                 type="button"
@@ -81,22 +95,28 @@ export function ProvidersPage() {
         </div>
 
         <div className="stack-list">
-          {providers.map((provider) => (
-            <button
-              key={provider.id}
-              type="button"
-              className={`select-card ${provider.id === active?.id ? "active" : ""}`}
-              onClick={() => {
-                setSelectedProvider(provider.id);
-              }}
-            >
-              <div>
-                <strong>{provider.name}</strong>
-                <span>{provider.type} · {provider.baseURL}</span>
-                <small>{provider.models.length} 个模型 · 每分钟 {provider.rpm} 次请求 · 每分钟 {provider.tpm.toLocaleString()} 个令牌</small>
+          {providers.map((provider, index) => (
+            <article key={provider.id} className={`select-card ${provider.id === active?.id ? "active" : ""}`}>
+              <button
+                type="button"
+                className="select-card-main"
+                onClick={() => {
+                  setSelectedProvider(provider.id);
+                }}
+              >
+                <div>
+                  <strong>{provider.name}</strong>
+                  <span>{provider.type} · {provider.baseURL}</span>
+                  <small>{provider.models.length} 个模型 · 每分钟 {provider.rpm} 次请求 · 每分钟 {provider.tpm.toLocaleString()} 个令牌</small>
+                </div>
+                <span className={`status-pill ${provider.status}`}>{providerStatusMap[provider.status] ?? provider.status}</span>
+              </button>
+              <div className="card-row-actions">
+                <button type="button" className="ghost-button compact" disabled={index === 0} onClick={() => moveProvider(provider.id, -1)}><ArrowUp size={14} />上移</button>
+                <button type="button" className="ghost-button compact" disabled={index === providers.length - 1} onClick={() => moveProvider(provider.id, 1)}><ArrowDown size={14} />下移</button>
+                <button type="button" className="ghost-button compact danger" onClick={() => void deleteProvider(provider.id)}><Trash2 size={14} />删除</button>
               </div>
-              <span className={`status-pill ${provider.status}`}>{providerStatusMap[provider.status] ?? provider.status}</span>
-            </button>
+            </article>
           ))}
         </div>
       </article>
@@ -166,6 +186,13 @@ export function ProvidersPage() {
             }}
           >
             自动发现模型
+          </button>
+          <button
+            type="button"
+            className="ghost-button danger"
+            onClick={() => void deleteProvider(form.id)}
+          >
+            <Trash2 size={16} /> 删除厂商
           </button>
         </div>
       </DrawerCard>

@@ -23,6 +23,7 @@ out.txt
 
 # Go build outputs
 *.exe
+*.exe~
 *.test
 *.out
 

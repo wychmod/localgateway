@@ -30,6 +30,10 @@ export function HideToTray() {
   return window['go']['main']['DesktopApp']['HideToTray']();
 }
 
+export function IsQuitting() {
+  return window['go']['main']['DesktopApp']['IsQuitting']();
+}
+
 export function MinimiseWindow() {
   return window['go']['main']['DesktopApp']['MinimiseWindow']();
 }
@@ -56,6 +60,10 @@ export function SendNativeNotice(arg1, arg2) {
 
 export function ShowMainWindow() {
   return window['go']['main']['DesktopApp']['ShowMainWindow']();
+}
+
+export function Shutdown(arg1) {
+  return window['go']['main']['DesktopApp']['Shutdown'](arg1);
 }
 
 export function Startup(arg1) {

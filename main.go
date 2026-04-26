@@ -116,7 +116,10 @@ func buildDesktopMenu(app *DesktopApp) *menu.Menu {
 }
 
 func runDesktopTray(app *DesktopApp) {
-	go systray.Run(func() {
+	systray.SetDoubleClickHandler(func() {
+		app.ShowMainWindow()
+	})
+	systray.Register(func() {
 		systray.SetTitle("灵枢")
 		systray.SetTooltip("灵枢桌面版")
 		if len(trayIcon) > 0 {
@@ -140,7 +143,6 @@ func runDesktopTray(app *DesktopApp) {
 					app.OpenAdminInBrowser()
 				case <-quitItem.ClickedCh:
 					app.CloseWindow()
-					systray.Quit()
 					return
 				}
 			}

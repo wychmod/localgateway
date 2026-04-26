@@ -1,6 +1,6 @@
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useEffect, useMemo, useState } from "react";
-import { distributionStatus, quickActions } from "../store/mock-data";
+
 import { labelFromMap, platformLabelMap } from "../store/labels";
 import { fetchDesktopStatus, isDesktopMode, type DesktopStatus } from "../utils/desktop-bridge";
 
@@ -74,18 +74,12 @@ export function DashboardPage() {
       <section className="hero-panel luxury-panel dashboard-hero">
         <div>
           <span className="eyebrow">系统总览</span>
-          <h2>网关配置 · 运行状态 · 分发进度</h2>
-          <p>首页现在开始展示失败趋势、备用切换趋势，以及热点模型与厂商成功率排行。</p>
-          <div className="inline-actions hero-actions">
-            {quickActions.map((action) => (
-              <button key={action} type="button" className="ghost-button compact">{action}</button>
-            ))}
-          </div>
+          <h2>灵枢总台</h2>
           {isDesktopMode ? (
             <div className="context-strip">
-              <span className="metric-pill">桌面版本：{desktopStatus.version}</span>
-              <span className="metric-pill">当前平台：{labelFromMap(platformLabelMap, desktopStatus.platform)}</span>
-              <span className="metric-pill">服务地址：{desktopStatus.serverAddr || "内嵌模式"}</span>
+              <span className="metric-pill">{desktopStatus.version}</span>
+              <span className="metric-pill">{labelFromMap(platformLabelMap, desktopStatus.platform)}</span>
+              <span className="metric-pill">{desktopStatus.serverAddr || "内嵌模式"}</span>
             </div>
           ) : null}
         </div>
@@ -103,7 +97,7 @@ export function DashboardPage() {
       </section>
 
       <section className="luxury-panel chart-panel">
-        <div className="panel-heading"><div><span className="eyebrow">费用分析</span><h3>近 7 日费用与用量趋势</h3></div></div>
+        <div className="panel-heading"><div><span className="eyebrow">费用趋势</span><h3>近 7 日</h3></div></div>
         <div className="chart-wrap">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data?.trend ?? []}>
@@ -118,7 +112,7 @@ export function DashboardPage() {
       </section>
 
       <section className="luxury-panel dashboard-side-panel alert-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">失败 / 备用趋势</span><h3>最近 7 日失败与切换</h3></div></div>
+        <div className="panel-heading compact-heading"><div><span className="eyebrow">异常趋势</span><h3>失败 / 备用切换</h3></div></div>
         <div className="chart-wrap">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data?.failure_trend ?? []}>
@@ -133,7 +127,7 @@ export function DashboardPage() {
       </section>
 
       <section className="luxury-panel providers-panel">
-        <div className="panel-heading"><div><span className="eyebrow">厂商成功率排行</span><h3>按成功率查看当前主要厂商</h3></div></div>
+        <div className="panel-heading"><div><span className="eyebrow">厂商排行</span><h3>成功率 Top</h3></div></div>
         <div className="provider-list">
           {(data?.provider_top ?? []).map((item) => (
             <article key={item.name} className="provider-row">
@@ -145,7 +139,7 @@ export function DashboardPage() {
       </section>
 
       <section className="luxury-panel dashboard-side-panel distribution-card-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">热点模型</span><h3>最近请求最活跃的模型</h3></div></div>
+        <div className="panel-heading compact-heading"><div><span className="eyebrow">热点模型</span><h3>活跃 Top</h3></div></div>
         <div className="stack-list">
           {(data?.hot_models ?? []).map((item) => (
             <article key={item.name} className="luxury-panel nested-panel detail-card">
@@ -157,7 +151,7 @@ export function DashboardPage() {
       </section>
 
       <section className="luxury-panel live-flow-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">最近请求</span><h3>最新请求链路</h3></div></div>
+        <div className="panel-heading compact-heading"><div><span className="eyebrow">最近请求</span><h3>实时链路</h3></div></div>
         <div className="log-stream">
           {(data?.recent_logs ?? []).map((item) => (
             <article key={item.id} className="log-row compact-log-row">

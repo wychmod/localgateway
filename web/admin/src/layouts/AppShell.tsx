@@ -13,30 +13,26 @@ import {
   Hash,
   KeyRound,
   LayoutDashboard,
-  LockKeyhole,
   Maximize2,
   Minimize2,
   Minus,
   Moon,
   Network,
-  PackageCheck,
   Rocket,
   ScrollText,
   ScanLine,
   Sparkles,
   Sun,
   SunMoon,
-  WandSparkles,
   X
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { useUIStore } from "../store/ui-store";
 import { useAdminStore } from "../store/admin-store";
-import { configValueLabelMap, labelFromMap, platformLabelMap, runtimeHealthMap } from "../store/labels";
+import { labelFromMap, platformLabelMap } from "../store/labels";
 import {
   closeDesktopWindow,
-  fetchConfigSummary,
   fetchDesktopStatus,
   fetchDesktopVersion,
   fetchRuntimeSummary,
@@ -57,27 +53,22 @@ import {
   sendDesktopNotice,
   showDesktopWindow,
   toggleDesktopMaximise,
-  type DesktopConfigSummary,
   type DesktopRuntimeSummary,
   type DesktopStatus,
   type DesktopWindowState
 } from "../utils/desktop-bridge";
 
 const navItems = [
-  { to: "/dashboard", label: "灵枢总台", icon: LayoutDashboard, description: "总览运行状态、费用变化与关键告警" },
-  { to: "/bootstrap", label: "启用引导", icon: WandSparkles, description: "完成灵枢首次启动与初始化配置" },
-  { to: "/bootstrap/success", label: "启用完成", icon: Activity, description: "查看灵枢完成启用后的系统状态" },
-  { to: "/security", label: "安全中心", icon: LockKeyhole, description: "管理登录保护与安全基线策略" },
-  { to: "/providers", label: "模型网络", icon: Network, description: "管理模型厂商、线路与接入地址" },
-  { to: "/keys", label: "密钥中心", icon: KeyRound, description: "管理密钥权限、预算与访问范围" },
-  { to: "/routing", label: "调度策略", icon: Sparkles, description: "配置模型分发规则与备用链路" },
-  { to: "/analytics", label: "用量洞察", icon: BarChart3, description: "查看费用、请求和令牌使用趋势" },
-  { to: "/logs", label: "运行记录", icon: ScrollText, description: "检索请求日志与异常链路详情" },
-  { to: "/settings", label: "系统偏好", icon: Cog, description: "调整灵枢参数与分发方式" },
-  { to: "/release-status", label: "发布工作台", icon: PackageCheck, description: "查看打包进度与发布准备情况" },
-  { to: "/version", label: "版本概览", icon: Hash, description: "查看当前版本、通道与产品状态" },
-  { to: "/build-checks", label: "发布检查", icon: FileCheck2, description: "核对发布前的关键检查清单" },
-  { to: "/quick-setup", label: "接入助手", icon: Rocket, description: "为常用工具生成一键接入配置" }
+  { to: "/dashboard", label: "总台", icon: LayoutDashboard, description: "运行状态总览" },
+  { to: "/providers", label: "厂商", icon: Network, description: "模型厂商管理" },
+  { to: "/keys", label: "密钥", icon: KeyRound, description: "密钥与预算" },
+  { to: "/routing", label: "路由", icon: Sparkles, description: "调度策略配置" },
+  { to: "/analytics", label: "分析", icon: BarChart3, description: "用量与趋势" },
+  { to: "/logs", label: "日志", icon: ScrollText, description: "运行记录检索" },
+  { to: "/settings", label: "设置", icon: Cog, description: "系统偏好" },
+  { to: "/version", label: "版本", icon: Hash, description: "版本与状态" },
+  { to: "/build-checks", label: "检查", icon: FileCheck2, description: "发布前检查" },
+  { to: "/quick-setup", label: "接入", icon: Rocket, description: "工具接入配置" }
 ];
 
 const themeMeta = {
@@ -123,7 +114,6 @@ export function AppShell({ children }: PropsWithChildren) {
   const [desktopVersion, setDesktopVersion] = useState("browser");
   const [desktopMaximised, setDesktopMaximised] = useState(false);
   const [runtimeSummary, setRuntimeSummary] = useState<DesktopRuntimeSummary>(fallbackDesktopStatus.runtime);
-  const [configSummary, setConfigSummary] = useState<DesktopConfigSummary>(fallbackDesktopStatus.configSummary);
   const [windowState, setWindowState] = useState<DesktopWindowState>(fallbackWindowState);
 
   useEffect(() => {
@@ -151,13 +141,11 @@ export function AppShell({ children }: PropsWithChildren) {
     void fetchDesktopStatus().then((status) => {
       setDesktopStatus(status);
       setRuntimeSummary(status.runtime);
-      setConfigSummary(status.configSummary);
       setWindowState(status.windowState);
       setDesktopMaximised(status.windowState.maximised);
     });
     void fetchDesktopVersion().then(setDesktopVersion);
     void fetchRuntimeSummary().then(setRuntimeSummary);
-    void fetchConfigSummary().then(setConfigSummary);
     void fetchWindowState().then((state) => {
       setWindowState(state);
       setDesktopMaximised(state.maximised);
@@ -166,7 +154,6 @@ export function AppShell({ children }: PropsWithChildren) {
     const offReady = onDesktopStatus((payload) => {
       setDesktopStatus(payload);
       setRuntimeSummary(payload.runtime);
-      setConfigSummary(payload.configSummary);
       setWindowState(payload.windowState);
       pushNotice({ tone: "success", title: "桌面服务已就绪", message: `桌面后端已启动，监听地址 ${payload.serverAddr || "本地内嵌"}。` });
     });
@@ -206,11 +193,8 @@ export function AppShell({ children }: PropsWithChildren) {
 
   const currentPage = useMemo(() => navItems.find((item) => location.pathname.startsWith(item.to)) ?? navItems[0], [location.pathname]);
   const healthyProviders = providers.filter((provider) => provider.status === "healthy").length;
-  const activeKey = keys.find((item) => item.status === "active") ?? keys[0];
   const resolvedTheme = themeMeta[theme];
   const ThemeIcon = resolvedTheme.icon;
-  const desktopLabel = desktopStatus.desktopMode ? `桌面版 ${desktopVersion}` : "浏览器版";
-  const platformLabel = labelFromMap(platformLabelMap, desktopStatus.platform || "web");
 
   const handleToggleMaximise = () => {
     const next = !desktopMaximised;
@@ -233,7 +217,7 @@ export function AppShell({ children }: PropsWithChildren) {
           <div className="desktop-titlebar__brand">
             <Activity size={16} />
             <span>{desktopStatus.windowTitle}</span>
-            <small>{desktopLabel}</small>
+            <small>{desktopStatus.desktopMode ? `桌面版 ${desktopVersion}` : "浏览器版"}</small>
           </div>
           <div className="desktop-titlebar__actions" style={{ ["--wails-draggable" as string]: "no-drag" }}>
             <button type="button" className="ghost-button compact titlebar-button" onClick={() => openDesktopAdminInBrowser()}><Globe size={14} />外部打开</button>
@@ -249,60 +233,40 @@ export function AppShell({ children }: PropsWithChildren) {
 
       <aside className={clsx("sidebar luxury-panel", sidebarOpen && "open")}>
         <div className="sidebar-top">
-          <div>
-            <div className="brand-mark"><Activity size={18} /><span>灵枢</span></div>
-            <p className="brand-subtitle">本地模型网关控制台</p>
-          </div>
-          <button type="button" className="ghost-button compact sidebar-close" onClick={() => setSidebarOpen(false)}><X size={16} />关闭</button>
-        </div>
-
-        <div className="workspace-card luxury-panel nested-panel">
-          <div>
-            <span className="eyebrow">当前工作区状态</span>
-            <strong>系统状态整体稳定</strong>
-          </div>
-          <div className="workspace-metrics">
-            <div><span>可用厂商</span><strong>{healthyProviders}/{providers.length}</strong></div>
-            <div><span>主用密钥</span><strong>{activeKey?.name ?? "尚未配置"}</strong></div>
-            <div><span>运行模式</span><strong>{desktopLabel}</strong></div>
-            <div><span>恢复页面</span><strong>{windowState.lastRoute || "/dashboard"}</strong></div>
-          </div>
-        </div>
-
-        <div className="workspace-card luxury-panel nested-panel">
-          <div>
-            <span className="eyebrow">桌面控制面板</span>
-            <strong>窗口 / 托盘 / 自检 / 配置摘要</strong>
-          </div>
-          <div className="workspace-metrics">
-            <div><span>健康状态</span><strong>{labelFromMap(runtimeHealthMap, runtimeSummary.health)}</strong></div>
-            <div><span>厂商数量</span><strong>{runtimeSummary.providers}</strong></div>
-            <div><span>密钥数量</span><strong>{runtimeSummary.keys}</strong></div>
-            <div><span>路由规则</span><strong>{runtimeSummary.rules}</strong></div>
-            <div><span>服务地址</span><strong>{configSummary.host}:{configSummary.port}</strong></div>
-            <div><span>分发模式</span><strong>{labelFromMap(configValueLabelMap, configSummary.bundleMode)}</strong></div>
-          </div>
-          {desktopStatus.desktopMode ? (
-            <div className="inline-actions">
-              <button type="button" className="ghost-button compact" onClick={() => showDesktopWindow()}><Eye size={14} />恢复窗口</button>
-              <button type="button" className="ghost-button compact" onClick={() => hideDesktopToTray()}><EyeOff size={14} />隐藏托盘</button>
-              <button type="button" className="ghost-button compact" onClick={handleSelfCheck}><ScanLine size={14} />运行自检</button>
-            </div>
-          ) : null}
+          <div className="brand-mark"><Activity size={18} /><span>灵枢</span></div>
+          <button type="button" className="ghost-button compact sidebar-close" onClick={() => setSidebarOpen(false)}><X size={16} /></button>
         </div>
 
         <nav className="sidebar-nav">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <NavLink key={item.to} to={item.to} className={({ isActive }) => clsx("nav-link", isActive && "active")}>
-                <div className="nav-link-main"><Icon size={18} /><div><span>{item.label}</span><small>{item.description}</small></div></div>
+              <NavLink key={item.to} to={item.to} className={({ isActive }) => clsx("nav-link", isActive && "active")} title={item.description}>
+                <div className="nav-link-main"><Icon size={18} /><span>{item.label}</span></div>
                 <ArrowRight size={14} className="nav-link-arrow" />
               </NavLink>
             );
           })}
         </nav>
 
+        <div className="sidebar-footer">
+          <div className="sidebar-footer-row">
+            <span className="eyebrow">运行状态</span>
+            <span className={`status-dot ${runtimeSummary.health === "healthy" ? "healthy" : ""}`} />
+          </div>
+          <div className="sidebar-footer-metrics">
+            <span>厂商 {healthyProviders}/{providers.length}</span>
+            <span>密钥 {runtimeSummary.keys}</span>
+            <span>规则 {runtimeSummary.rules}</span>
+          </div>
+          {desktopStatus.desktopMode ? (
+            <div className="sidebar-footer-actions">
+              <button type="button" className="ghost-button compact" onClick={() => showDesktopWindow()} title="恢复窗口"><Eye size={14} /></button>
+              <button type="button" className="ghost-button compact" onClick={() => hideDesktopToTray()} title="隐藏到托盘"><EyeOff size={14} /></button>
+              <button type="button" className="ghost-button compact" onClick={handleSelfCheck} title="运行自检"><ScanLine size={14} /></button>
+            </div>
+          ) : null}
+        </div>
       </aside>
 
       <div className="main-column">
@@ -315,25 +279,19 @@ export function AppShell({ children }: PropsWithChildren) {
             </div>
           </div>
           <div className="topbar-actions">
-            <div className="theme-switcher topbar-theme-switcher">
-              {(["light", "dark", "system"] as const).map((item) => {
-                const MetaIcon = themeMeta[item].icon;
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    title={`切换到${themeMeta[item].label}`}
-                    className={clsx("theme-button compact", theme === item && "active")}
-                    onClick={() => setTheme(item)}
-                  >
-                    <MetaIcon size={16} />
-                    {themeMeta[item].label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="status-badge neutral-pill"><ThemeIcon size={14} />{resolvedTheme.label}</div>
-            <div className="status-badge neutral-pill"><Activity size={14} />{platformLabel}</div>
+            <button
+            type="button"
+            className="ghost-button compact theme-toggle"
+            title={`当前主题：${resolvedTheme.label}，点击切换`}
+            onClick={() => {
+              const order = ["light", "dark", "system"] as const;
+              const next = order[(order.indexOf(theme) + 1) % order.length];
+              setTheme(next);
+            }}
+          >
+            <ThemeIcon size={16} />
+            <span className="theme-label">{resolvedTheme.label}</span>
+          </button>
             <button type="button" className="ghost-button compact" onClick={() => navigate("/logs")}><Bell size={16} />通知 {notices.length}</button>
             {desktopStatus.desktopMode ? <button type="button" className="ghost-button compact" onClick={() => sendDesktopNotice("灵枢", "桌面通知发送成功，通知链路可用。")}><Bell size={16} />原生通知</button> : null}
             <button type="button" className="ghost-button" onClick={() => navigate("/quick-setup")}>快速接入</button>

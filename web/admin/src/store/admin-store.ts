@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { api } from "../utils/api";
 import {
+  DistributionPlanRecord,
   LocalKeyRecord,
+  ModelAliasRecord,
   ProviderRecord,
   RoutingRuleRecord,
   RoutingSimulation,
@@ -34,6 +36,8 @@ type AdminState = {
   providers: ProviderRecord[];
   keys: LocalKeyRecord[];
   rules: RoutingRuleRecord[];
+  aliases: ModelAliasRecord[];
+  distributionPlan: DistributionPlanRecord | null;
   settings: SettingsRecord;
   selectedProviderId?: string;
   selectedKeyId?: string;
@@ -42,16 +46,23 @@ type AdminState = {
   reloadProviders: () => Promise<void>;
   reloadKeys: () => Promise<void>;
   reloadRules: () => Promise<void>;
+  reloadAliases: () => Promise<void>;
   reloadSettings: () => Promise<void>;
+  reloadDistributionPlan: () => Promise<void>;
   setSelectedProvider: (id?: string) => void;
   setSelectedKey: (id?: string) => void;
   saveProvider: (record: ProviderRecord) => Promise<void>;
+  deleteProvider: (id: string) => Promise<void>;
+  reorderProviders: (ids: string[]) => Promise<void>;
   testProvider: (id: string) => Promise<void>;
   discoverProviderModels: (id: string) => Promise<string[]>;
   saveKey: (record: LocalKeyRecord) => Promise<void>;
   rotateKey: (id: string) => Promise<void>;
   revokeKey: (id: string) => Promise<void>;
+  extendKey: (id: string, expiresAt: string | null) => Promise<void>;
   saveRule: (record: RoutingRuleRecord) => Promise<void>;
+  deleteRule: (id: string) => Promise<void>;
+  saveAlias: (record: ModelAliasRecord) => Promise<void>;
   testRouting: (input: { model: string; localKey: string; format: string; streaming?: boolean }) => Promise<RoutingSimulation | null>;
   saveSettings: (record: SettingsRecord) => Promise<void>;
   backupSettings: () => Promise<void>;
@@ -63,6 +74,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   providers: providerRecordsLocalized,
   keys: localKeyRecordsLocalized,
   rules: routingRuleRecordsLocalized,
+  aliases: [],
+  distributionPlan: null,
   settings: settingsRecordLocalized,
   selectedProviderId: providerRecordsLocalized[0]?.id,
   selectedKeyId: localKeyRecordsLocalized[0]?.id,
@@ -75,7 +88,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     }
   ],
   hydrate: async () => {
-    await Promise.all([get().reloadProviders(), get().reloadKeys(), get().reloadRules(), get().reloadSettings()]);
+    await Promise.all([
+      get().reloadProviders(),
+      get().reloadKeys(),
+      get().reloadRules(),
+      get().reloadAliases(),
+      get().reloadSettings(),
+      get().reloadDistributionPlan()
+    ]);
   },
   reloadProviders: async () => {
     const result = await api.get<ProviderApiRecord[]>("/providers");
@@ -103,6 +123,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     }
     set({ rules: result.data.map(mapRuleFromApi) });
   },
+  reloadAliases: async () => {
+    const result = await api.get<ModelAliasApiRecord[]>("/aliases");
+    if (!result.ok || !result.data) {
+      get().pushNotice({ tone: "warning", title: "模型别名加载失败", message: result.error ?? "无法读取后端模型别名。" });
+      return;
+    }
+    set({ aliases: result.data.map(mapAliasFromApi) });
+  },
   reloadSettings: async () => {
     const result = await api.get<SettingsApiRecord>("/settings");
     if (!result.ok || !result.data) {
@@ -110,6 +138,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       return;
     }
     set({ settings: mapSettingsFromApi(result.data) });
+  },
+  reloadDistributionPlan: async () => {
+    const result = await api.get<DistributionPlanRecord>("/distribution");
+    if (!result.ok || !result.data) {
+      get().pushNotice({ tone: "warning", title: "分发计划加载失败", message: result.error ?? "无法读取后端分发计划。" });
+      return;
+    }
+    set({ distributionPlan: result.data });
   },
   setSelectedProvider: (id) => set({ selectedProviderId: id }),
   setSelectedKey: (id) => set({ selectedKeyId: id }),
@@ -126,6 +162,27 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const saved = mapProviderFromApi(result.data);
     set((state) => ({ providers: upsert(state.providers, saved), selectedProviderId: saved.id }));
     get().pushNotice({ tone: "success", title: "厂商配置已保存", message: `${saved.name} 已写入本地数据库。` });
+  },
+  deleteProvider: async (id) => {
+    const result = await api.delete<Record<string, unknown>>(`/providers/${id}`);
+    if (!result.ok) {
+      get().pushNotice({ tone: "warning", title: "厂商删除失败", message: result.error ?? "后端未能删除当前厂商。" });
+      return;
+    }
+    set((state) => {
+      const providers = state.providers.filter((item) => item.id !== id);
+      return { providers, selectedProviderId: providers[0]?.id };
+    });
+    get().pushNotice({ tone: "success", title: "厂商已删除", message: "该厂商配置已从本地数据库移除。" });
+  },
+  reorderProviders: async (ids) => {
+    const result = await api.post<Record<string, unknown>>("/providers/reorder", { ids });
+    if (!result.ok) {
+      get().pushNotice({ tone: "warning", title: "厂商排序失败", message: result.error ?? "后端未能保存当前排序。" });
+      return;
+    }
+    await get().reloadProviders();
+    get().pushNotice({ tone: "success", title: "厂商排序已保存", message: "新的模型厂商优先级已经生效。" });
   },
   testProvider: async (id) => {
     const result = await api.post<{ status: string; latency_ms: number; message: string }>(`/providers/${id}/test`);
@@ -177,6 +234,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     await get().reloadKeys();
     get().pushNotice({ tone: "success", title: "密钥已吊销", message: "该本地密钥已禁用并标记为吊销。" });
   },
+  extendKey: async (id, expiresAt) => {
+    const result = await api.post<KeyApiRecord>(`/keys/${id}/extend`, { expires_at: expiresAt });
+    if (!result.ok || !result.data) {
+      get().pushNotice({ tone: "warning", title: "密钥续期失败", message: result.error ?? "后端未能更新密钥有效期。" });
+      return;
+    }
+    const saved = mapKeyFromApi(result.data);
+    set((state) => ({ keys: upsert(state.keys, saved), selectedKeyId: saved.id }));
+    get().pushNotice({ tone: "success", title: "密钥有效期已更新", message: `${saved.name} 的到期时间已保存。` });
+  },
   saveRule: async (record) => {
     const payload = mapRuleToApi(record);
     const isExisting = get().rules.some((item) => item.id === record.id);
@@ -190,6 +257,25 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const saved = mapRuleFromApi(result.data);
     set((state) => ({ rules: upsert(state.rules, saved) }));
     get().pushNotice({ tone: "success", title: "路由规则已保存", message: `${saved.modelPattern} 已写入本地数据库。` });
+  },
+  deleteRule: async (id) => {
+    const result = await api.delete<Record<string, unknown>>(`/routing/${id}`);
+    if (!result.ok) {
+      get().pushNotice({ tone: "warning", title: "路由规则删除失败", message: result.error ?? "后端未能删除当前规则。" });
+      return;
+    }
+    set((state) => ({ rules: state.rules.filter((item) => item.id !== id) }));
+    get().pushNotice({ tone: "success", title: "路由规则已删除", message: "该调度规则已从本地数据库移除。" });
+  },
+  saveAlias: async (record) => {
+    const result = await api.put<ModelAliasApiRecord>("/aliases", mapAliasToApi(record));
+    if (!result.ok || !result.data) {
+      get().pushNotice({ tone: "warning", title: "模型别名保存失败", message: result.error ?? "后端未接受当前模型别名。" });
+      return;
+    }
+    const saved = mapAliasFromApi(result.data);
+    set((state) => ({ aliases: upsertByAlias(state.aliases, saved) }));
+    get().pushNotice({ tone: "success", title: "模型别名已保存", message: `${saved.alias} 将指向 ${saved.target}。` });
   },
   testRouting: async (input) => {
     const result = await api.post<RoutingTestApiRecord>("/routing/test", {
@@ -236,6 +322,14 @@ function upsert<T extends { id: string }>(items: T[], next: T): T[] {
     return [next, ...items];
   }
   return items.map((item) => (item.id === next.id ? next : item));
+}
+
+function upsertByAlias(items: ModelAliasRecord[], next: ModelAliasRecord): ModelAliasRecord[] {
+  const exists = items.some((item) => item.alias === next.alias);
+  if (!exists) {
+    return [next, ...items];
+  }
+  return items.map((item) => (item.alias === next.alias ? next : item));
 }
 
 function prependNotice(notices: Notice[], notice: Omit<Notice, "id">): Notice[] {
@@ -287,6 +381,13 @@ type RoutingTestApiRecord = {
   fallback_chain: string[];
   estimated_cost: string;
   estimated_ttft: string;
+};
+
+type ModelAliasApiRecord = {
+  id?: string;
+  alias: string;
+  target: string;
+  fallback_chain?: string;
 };
 
 type SettingsApiRecord = {
@@ -421,6 +522,24 @@ function mapRuleToApi(record: RoutingRuleRecord) {
     provider_chain: record.providerChain.map((provider) => valueFromLabel(providerNameLabelMap, provider)),
     fallback_chain: record.fallbackChain.map((provider) => valueFromLabel(providerNameLabelMap, provider)),
     enabled: record.enabled
+  };
+}
+
+function mapAliasFromApi(record: ModelAliasApiRecord): ModelAliasRecord {
+  return {
+    id: record.id,
+    alias: record.alias,
+    target: labelFromMap(providerNameLabelMap, record.target),
+    fallback_chain: record.fallback_chain,
+    fallbackChain: parseJSONList(record.fallback_chain).map((provider) => labelFromMap(providerNameLabelMap, provider))
+  };
+}
+
+function mapAliasToApi(record: ModelAliasRecord) {
+  return {
+    alias: record.alias,
+    target: valueFromLabel(providerNameLabelMap, record.target),
+    fallback_chain: record.fallbackChain.map((provider) => valueFromLabel(providerNameLabelMap, provider))
   };
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Copy, RotateCcw, ShieldAlert } from "lucide-react";
+import { CalendarClock, Copy, RotateCcw, ShieldAlert } from "lucide-react";
 import { DrawerCard } from "../components/DrawerCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAdminStore } from "../store/admin-store";
@@ -15,17 +15,20 @@ const createEmptyKey = () => ({
   currentSpend: 0,
   tokenBudget: 5000000,
   currentTokens: 0,
+  enabled: true,
   status: "active" as const
 });
 
 export function KeysPage() {
-  const { keys, selectedKeyId, setSelectedKey, saveKey, rotateKey, revokeKey, pushNotice } = useAdminStore();
+  const { keys, selectedKeyId, setSelectedKey, saveKey, rotateKey, revokeKey, extendKey, pushNotice } = useAdminStore();
   const active = useMemo(() => keys.find((item) => item.id === selectedKeyId) ?? keys[0], [keys, selectedKeyId]);
   const [form, setForm] = useState(active ?? createEmptyKey());
+  const [expiresAt, setExpiresAt] = useState("");
 
   useEffect(() => {
     if (active) {
       setForm(active);
+      setExpiresAt(active.expires_at ? active.expires_at.slice(0, 10) : "");
     }
   }, [active]);
 
@@ -37,8 +40,7 @@ export function KeysPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="本地密钥"
-          title="权限 · 预算 · 续期管理"
-          description="创建、复制、轮换、吊销、预算限制和工具接入全部集中处理。"
+          title="密钥管理"
           actions={
             <button
               type="button"
@@ -47,11 +49,8 @@ export function KeysPage() {
                 const next = createEmptyKey();
                 setSelectedKey(next.id);
                 setForm(next);
-                pushNotice({
-                  tone: "info",
-                  title: "已创建空白密钥草稿",
-                  message: "配置允许模型和预算后，即可保存到本地状态。"
-                });
+                setExpiresAt("");
+                pushNotice({ tone: "info", title: "新建密钥", message: "配置模型和预算后保存。" });
               }}
             >
               新建密钥
@@ -76,7 +75,7 @@ export function KeysPage() {
               <div>
                 <strong>{key.name}</strong>
                 <span>{key.displayKey}</span>
-                <small>{key.allowedModels.length} 个模型 · 已用 {key.currentSpend.toFixed(1)} / {key.monthlyBudget} 美元</small>
+                <small>{key.allowedModels.length} 个模型 · 已用 {key.currentSpend.toFixed(1)} / {key.monthlyBudget} 美元 · 到期 {key.expires_at ? new Date(key.expires_at).toLocaleDateString() : "长期有效"}</small>
               </div>
               <span className={`status-pill ${key.status}`}>{keyStatusMap[key.status] ?? key.status}</span>
             </button>
@@ -118,6 +117,14 @@ export function KeysPage() {
             <span>令牌预算（个）</span>
             <input type="number" value={form.tokenBudget} onChange={(e) => setForm({ ...form, tokenBudget: Number(e.target.value) })} />
           </label>
+          <label>
+            <span>到期日期</span>
+            <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+          </label>
+          <label>
+            <span>当前有效期</span>
+            <input value={form.expires_at ? new Date(form.expires_at).toLocaleString() : "长期有效"} readOnly />
+          </label>
         </div>
 
         <div className="usage-stack">
@@ -143,7 +150,7 @@ export function KeysPage() {
         </div>
 
         <div className="inline-actions sticky-actions">
-          <button type="button" className="primary-button" onClick={() => void saveKey(form)}>保存变更</button>
+          <button type="button" className="primary-button" onClick={() => void saveKey({ ...form, expires_at: expiresAt ? `${expiresAt}T23:59:59Z` : null })}>保存变更</button>
           <button
             type="button"
             className="ghost-button"
@@ -164,6 +171,13 @@ export function KeysPage() {
           <button
             type="button"
             className="ghost-button"
+            onClick={() => void extendKey(form.id, expiresAt ? `${expiresAt}T23:59:59Z` : null)}
+          >
+            <CalendarClock size={16} /> 保存有效期
+          </button>
+          <button
+            type="button"
+            className="ghost-button danger"
             onClick={() => void revokeKey(form.id)}
           >
             <ShieldAlert size={16} /> 吊销密钥
@@ -173,3 +187,4 @@ export function KeysPage() {
     </section>
   );
 }
+

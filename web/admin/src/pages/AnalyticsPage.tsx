@@ -60,12 +60,11 @@ export function AnalyticsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="数据分析"
-          title="费用 · 请求 · 令牌与性能分析"
-          description="这里已经把用量聚合、日志统计、模型拆分和本地密钥拆分都接到真实数据。"
+          title="用量分析"
           actions={
             <>
-              <button type="button" className={`ghost-button compact ${range === "7d" ? "active-chip" : ""}`} onClick={() => setRange("7d")}>近 7 天</button>
-              <button type="button" className={`ghost-button compact ${range === "30d" ? "active-chip" : ""}`} onClick={() => setRange("30d")}>近 30 天</button>
+              <button type="button" className={`ghost-button compact ${range === "7d" ? "active-chip" : ""}`} onClick={() => setRange("7d")}>7 天</button>
+              <button type="button" className={`ghost-button compact ${range === "30d" ? "active-chip" : ""}`} onClick={() => setRange("30d")}>30 天</button>
             </>
           }
         />
@@ -86,12 +85,11 @@ export function AnalyticsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="趋势变化"
-          title="趋势图切换"
-          description="支持费用与请求两个视角切换。"
+          title="趋势"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${dimension === "cost" ? "active-chip" : ""}`} onClick={() => setDimension("cost")}>费用</button>
-              <button type="button" className={`ghost-button compact ${dimension === "requests" ? "active-chip" : ""}`} onClick={() => setDimension("requests")}>请求数</button>
+              <button type="button" className={`ghost-button compact ${dimension === "requests" ? "active-chip" : ""}`} onClick={() => setDimension("requests")}>请求</button>
             </>
           }
         />
@@ -110,13 +108,12 @@ export function AnalyticsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="维度拆分"
-          title="厂商 / 模型 / 本地密钥拆分"
-          description="在同一页里切不同维度看成本、请求量和令牌分布。"
+          title="拆分视图"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${breakdownMode === "provider" ? "active-chip" : ""}`} onClick={() => setBreakdownMode("provider")}>厂商</button>
               <button type="button" className={`ghost-button compact ${breakdownMode === "model" ? "active-chip" : ""}`} onClick={() => setBreakdownMode("model")}>模型</button>
-              <button type="button" className={`ghost-button compact ${breakdownMode === "key" ? "active-chip" : ""}`} onClick={() => setBreakdownMode("key")}>本地密钥</button>
+              <button type="button" className={`ghost-button compact ${breakdownMode === "key" ? "active-chip" : ""}`} onClick={() => setBreakdownMode("key")}>密钥</button>
             </>
           }
         />

@@ -4,7 +4,7 @@ import { useAdminStore } from "../store/admin-store";
 
 export function QuickSetupPage() {
   const { keys, pushNotice } = useAdminStore();
-  const currentKey = keys[0];
+  const currentKey = keys[0] ?? { name: "未加载", displayKey: "lg-****" };
 
   const setups = [
     {
@@ -25,21 +25,16 @@ export function QuickSetupPage() {
     <section className="luxury-panel page-panel">
       <SectionHeader
         eyebrow="接入助手"
-        title="灵枢接入说明"
-        description="面向 Codex、Claude Desktop、Cursor 等工具生成一键接入说明。"
+        title="接入配置"
         actions={
           <button
             type="button"
             className="ghost-button"
             onClick={() =>
-              pushNotice({
-                tone: "success",
-                title: "配置校验通过",
-                message: "当前示例以灵枢本地网关地址和首个本地密钥生成，适合作为接入模板。"
-              })
+              pushNotice({ tone: "success", title: "配置校验通过", message: "接入模板已生成。" })
             }
           >
-            <CheckCheck size={16} /> 校验配置
+            <CheckCheck size={16} /> 校验
           </button>
         }
       />
@@ -82,14 +77,10 @@ export function QuickSetupPage() {
           type="button"
           className="primary-button"
           onClick={() =>
-            pushNotice({
-              tone: "info",
-              title: "接入向导已预留",
-              message: "后续可以把工具类型、密钥选择和配置导出整合成真正的一步式向导。"
-            })
+            pushNotice({ tone: "info", title: "接入向导", message: "一步式向导后续开放。" })
           }
         >
-          <TerminalSquare size={16} /> 打开接入向导
+          <TerminalSquare size={16} /> 向导
         </button>
       </div>
     </section>

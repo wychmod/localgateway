@@ -2,6 +2,8 @@ module localgateway
 
 go 1.22.0
 
+replace github.com/getlantern/systray => ./third_party/systray
+
 require (
 	github.com/getlantern/systray v1.2.2
 	github.com/glebarez/sqlite v1.11.0

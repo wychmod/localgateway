@@ -18,7 +18,7 @@ export function SectionHeader({
         <h2>{title}</h2>
         {description ? <p className="section-description">{description}</p> : null}
       </div>
-      {actions ? <div className="topbar-actions">{actions}</div> : null}
+      {actions ? <div className="section-actions">{actions}</div> : null}
     </div>
   );
 }
