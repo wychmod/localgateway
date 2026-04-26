@@ -81,10 +81,10 @@ body::-webkit-scrollbar-track {
   background:
     linear-gradient(180deg, transparent, var(--scrollbar-track) 18%, var(--scrollbar-track) 82%, transparent);
 }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button { border: none; cursor: pointer; }
 a { text-decoration: none; color: inherit; }
-input, select {
+input, select, textarea {
   width: 100%;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.1);
@@ -92,10 +92,11 @@ input, select {
   color: var(--text);
   padding: 12px 14px;
 }
-input::placeholder { color: var(--muted); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+textarea { min-height: 112px; resize: vertical; line-height: 1.5; }
 pre { margin: 0; white-space: pre-wrap; color: var(--text); }
-label { display: grid; gap: 8px; }
-label span, .drawer-card-header p, .brand-subtitle, .theme-subtitle, .hero-panel p, .provider-row span, .key-card p, .route-card span, .settings-card li, .nav-link small, .select-card small { color: var(--muted); }
+label, .form-field { display: grid; gap: 8px; }
+label span, .form-field > span, .drawer-card-header p, .brand-subtitle, .theme-subtitle, .hero-panel p, .provider-row span, .key-card p, .route-card span, .settings-card li, .nav-link small, .select-card small { color: var(--muted); }
 .app-shell { display: grid; grid-template-columns: var(--sidebar-width) 1fr; min-height: 100vh; gap: 24px; padding: 24px; position: relative; }
 .main-column { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .page-content, .page-grid, .stats-grid, .key-grid, .route-stack, .settings-grid, .setup-grid, .stack-list, .distribution-stack, .simulation-grid, .metric-bar-grid, .status-grid, .success-stack, .detail-stack, .notice-stack, .usage-stack { display: grid; gap: 20px; }
@@ -319,9 +320,64 @@ th, td { text-align: left; padding: 16px 12px; border-bottom: 1px solid rgba(255
 .settings-card ul { padding-left: 18px; }
 .log-row { grid-template-columns: 120px 1.4fr 1.2fr 120px 120px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.form-grid label span { font-size: 0.85rem; margin-bottom: 2px; }
-input, select { padding: 10px 12px; font-size: 0.9rem; }
+.form-grid label span, .form-grid .form-field > span { font-size: 0.85rem; margin-bottom: 2px; }
+input, select, textarea { padding: 10px 12px; font-size: 0.9rem; }
 .span-2 { grid-column: span 2; }
+.field-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.radio-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.radio-card {
+  position: relative;
+  min-height: 82px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+.radio-card:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.07);
+}
+.radio-card.active {
+  border-color: rgba(56, 189, 248, 0.62);
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.16), rgba(56, 189, 248, 0.1));
+}
+.radio-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.radio-card strong {
+  display: block;
+  font-size: 0.9rem;
+}
+.radio-card small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+.secret-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.icon-button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  flex: 0 0 auto;
+}
 .drawer-card { display: grid; gap: 16px; }
 .drawer-card-header { margin-bottom: 0; }
 .drawer-card-header h3 { font-size: 1.1rem; margin: 2px 0 0; }
@@ -443,6 +499,7 @@ input, select { padding: 10px 12px; font-size: 0.9rem; }
   .app-shell { padding: 16px; gap: 16px; }
   :root { --sidebar-width: 100%; }
   .stats-grid, .key-grid, .settings-grid, .setup-grid, .form-grid { grid-template-columns: 1fr; }
+  .radio-card-grid { grid-template-columns: 1fr; }
   .log-row, .compact-log-row { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }
   .panel-heading, .topbar, .topbar-leading { align-items: flex-start; }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, RefreshCcw, Trash2, Wifi } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, RefreshCcw, Trash2, Wifi } from "lucide-react";
 import { DrawerCard } from "../components/DrawerCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAdminStore } from "../store/admin-store";
@@ -10,12 +10,19 @@ const emptyProvider = (count: number) => ({
   name: "新厂商",
   type: "OpenAI 兼容",
   baseURL: "https://",
+  apiKey: "",
   status: "healthy" as const,
   priority: count + 1,
   models: [],
   rpm: 60,
   tpm: 120000
 });
+
+const providerTypeOptions = [
+  { value: "OpenAI 兼容", label: "OpenAI 兼容", hint: "Chat Completions /v1" },
+  { value: "Anthropic 兼容", label: "Anthropic 兼容", hint: "Messages /v1" },
+  { value: "DeepSeek 兼容", label: "DeepSeek 兼容", hint: "OpenAI 格式" }
+];
 
 export function ProvidersPage() {
   const {
@@ -30,10 +37,11 @@ export function ProvidersPage() {
     pushNotice
   } = useAdminStore();
   const active = useMemo(
-    () => providers.find((item) => item.id === selectedProviderId) ?? providers[0],
+    () => providers.find((item) => item.id === selectedProviderId),
     [providers, selectedProviderId]
   );
   const [form, setForm] = useState(active ?? emptyProvider(providers.length));
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (active) {
@@ -127,29 +135,87 @@ export function ProvidersPage() {
             <span>厂商名称</span>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="例如：OpenAI 主线路" />
           </label>
-          <label>
+          <div className="form-field span-2">
             <span>接入类型</span>
-            <input value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} placeholder="例如：OpenAI 兼容 / Anthropic / DeepSeek" />
-          </label>
+            <div className="radio-card-grid" role="radiogroup" aria-label="接入类型">
+              {providerTypeOptions.map((option) => (
+                <label key={option.value} className={`radio-card ${form.type === option.value ? "active" : ""}`}>
+                  <input
+                    type="radio"
+                    name="provider-type"
+                    value={option.value}
+                    checked={form.type === option.value}
+                    onChange={() => setForm({ ...form, type: option.value })}
+                  />
+                  <strong>{option.label}</strong>
+                  <small>{option.hint}</small>
+                </label>
+              ))}
+            </div>
+          </div>
           <label className="span-2">
             <span>接口地址</span>
-            <input value={form.baseURL} onChange={(e) => setForm({ ...form, baseURL: e.target.value })} placeholder="https://api.example.com" />
+            <input
+              type="url"
+              value={form.baseURL}
+              onChange={(e) => setForm({ ...form, baseURL: e.target.value })}
+              placeholder="https://api.example.com"
+              spellCheck={false}
+            />
+            <small className="field-hint">填写基础地址即可，系统会自动追加 /v1/chat/completions 或 /v1/messages。</small>
+          </label>
+          <label className="span-2">
+            <span>API Key / Token</span>
+            <div className="secret-input">
+              <input
+                type={showApiKey ? "text" : "password"}
+                value={form.apiKey ?? ""}
+                onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+                placeholder="sk-..."
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className="ghost-button compact icon-button"
+                onClick={() => setShowApiKey((value) => !value)}
+                aria-label={showApiKey ? "隐藏 Token" : "显示 Token"}
+              >
+                {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </label>
           <label>
             <span>每分钟请求数</span>
-            <input type="number" value={form.rpm} onChange={(e) => setForm({ ...form, rpm: Number(e.target.value) })} />
+            <input
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              value={form.rpm}
+              onChange={(e) => setForm({ ...form, rpm: Number(e.target.value) })}
+            />
           </label>
           <label>
             <span>每分钟令牌数</span>
-            <input type="number" value={form.tpm} onChange={(e) => setForm({ ...form, tpm: Number(e.target.value) })} />
+            <input
+              type="number"
+              min={0}
+              step={1000}
+              inputMode="numeric"
+              value={form.tpm}
+              onChange={(e) => setForm({ ...form, tpm: Number(e.target.value) })}
+            />
           </label>
           <label className="span-2">
             <span>支持模型</span>
-            <input
+            <textarea
               value={modelsText}
-              onChange={(e) => setForm({ ...form, models: e.target.value.split(",").map((item) => item.trim()).filter(Boolean) })}
+              onChange={(e) => setForm({ ...form, models: e.target.value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean) })}
               placeholder="例如：gpt-4o, gpt-4o-mini, o3-mini"
+              rows={4}
             />
+            <small className="field-hint">支持逗号或换行分隔，保存前会自动去掉空项。</small>
           </label>
         </div>
 

@@ -9,6 +9,7 @@ import (
 	"localgateway/internal/admin"
 	"localgateway/internal/auth"
 	"localgateway/internal/config"
+	"localgateway/internal/paths"
 	"localgateway/internal/provider"
 	"localgateway/internal/requestlog"
 	"localgateway/internal/routing"
@@ -33,17 +34,27 @@ type Application struct {
 }
 
 func New() (*Application, error) {
+	appPaths, err := paths.Resolve()
+	if err != nil {
+		return nil, err
+	}
+
 	cfgPath := os.Getenv("LG_CONFIG")
 	if cfgPath == "" {
-		if _, err := os.Stat("config.yaml"); err == nil {
-			cfgPath = "config.yaml"
-		} else {
-			cfgPath = "configs/config.example.yaml"
+		cfgPath, err = paths.EnsureUserConfig(appPaths)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	cfg, err := config.Load(cfgPath)
 	if err != nil {
+		return nil, err
+	}
+	cfg.Database.Path = paths.ResolveUserDataPath(appPaths, cfg.Database.Path, "data/localgateway.db")
+	cfg.Security.EncryptionKeyFile = paths.ResolveUserDataPath(appPaths, cfg.Security.EncryptionKeyFile, ".secret")
+
+	if err := paths.MigrateLegacyDatabase(cfg.Database.Path); err != nil {
 		return nil, err
 	}
 

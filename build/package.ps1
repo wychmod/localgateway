@@ -42,13 +42,10 @@ Pop-Location
 # Step 5: Assemble portable package
 Write-Host "[5/5] Assembling portable package..." -ForegroundColor Yellow
 if (Test-Path $OutputDir) { Remove-Item $OutputDir -Recurse -Force }
-New-Item -ItemType Directory -Path "$OutputDir\data" -Force | Out-Null
-New-Item -ItemType Directory -Path "$OutputDir\logs" -Force | Out-Null
+New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 
 Copy-Item (Join-Path $ProjectRoot "lingshu.exe") $OutputDir -Force
 Copy-Item (Join-Path $ProjectRoot "configs\config.example.yaml") (Join-Path $OutputDir "config.yaml") -Force
-New-Item -ItemType File -Path "$OutputDir\data\.gitkeep" -Force | Out-Null
-New-Item -ItemType File -Path "$OutputDir\logs\.gitkeep" -Force | Out-Null
 
 Write-Host ""
 Write-Host "=== Build Complete ===" -ForegroundColor Green

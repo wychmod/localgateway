@@ -91,10 +91,11 @@ func (s *Service) DistributionPlan() map[string]any {
 	return map[string]any{
 		"artifact": "lingshu.zip",
 		"mode":     "download-and-run",
-		"contents": []string{"lingshu.exe", "config.yaml", "data/", "logs/"},
+		"contents": []string{"lingshu.exe", "config.yaml"},
 		"notes": []string{
-			"默认单目录部署",
+			"配置和数据库会保存到当前系统用户目录",
 			"首次下载后即可运行",
+			"再次下载新版程序会复用同一份本地数据",
 			"Admin 前端资源随可执行文件一并内嵌",
 		},
 	}
