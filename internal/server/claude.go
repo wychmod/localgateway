@@ -10,6 +10,7 @@ type claudeMessagesRequest struct {
 	Model     string `json:"model"`
 	MaxTokens int    `json:"max_tokens"`
 	System    string `json:"system"`
+	Stream    bool   `json:"stream"`
 	Messages  []struct {
 		Role    string `json:"role"`
 		Content string `json:"content"`
@@ -43,6 +44,11 @@ func (r *Router) handleClaudeMessages(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	if payload.Stream {
+		r.handleClaudeMessagesStream(w, req, payload, localKey, decision)
+		return
+	}
+
 	requestBytes, err := json.Marshal(payload)
 	if err != nil {
 		writeGatewayError(w, &gatewayError{HTTPStatus: http.StatusInternalServerError, Type: "gateway_error", Code: "request_marshal_failed", Message: err.Error(), Provider: decision.Provider.Name, Retryable: false})
@@ -67,6 +73,7 @@ func (r *Router) handleClaudeMessages(w http.ResponseWriter, req *http.Request) 
 	if resp.StatusCode >= 400 {
 		gwErr := mapUpstreamError(resp.StatusCode, responseBytes, decision.Provider.Name)
 		writeGatewayError(w, gwErr)
+		logRequestBestEffort(req.Context(), r.deps.DB, localKey.ID, decision.Provider.ID, "/v1/messages", req.Method, resp.StatusCode, time.Since(startedAt).Milliseconds(), gwErr.Error(), trace)
 		return
 	}
 
@@ -74,4 +81,5 @@ func (r *Router) handleClaudeMessages(w http.ResponseWriter, req *http.Request) 
 	w.Header().Set("X-Request-Trace-Id", trace.ID)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(responseBytes)
+	logRequestBestEffort(req.Context(), r.deps.DB, localKey.ID, decision.Provider.ID, "/v1/messages", req.Method, http.StatusOK, time.Since(startedAt).Milliseconds(), "", trace)
 }

@@ -14,12 +14,24 @@ type LogItem = {
   fallback_tried: string[];
   created_at: string;
   metadata: Record<string, unknown>;
+  status_code: number;
+};
+
+type LogStats = {
+  total: number;
+  failures: number;
+  fallbacks: number;
+  avg_latency_ms: number;
 };
 
 export function LogsPage() {
   const [query, setQuery] = useState("");
   const [onlyFallback, setOnlyFallback] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [providerFilter, setProviderFilter] = useState("");
+  const [apiFormatFilter, setApiFormatFilter] = useState("");
   const [logs, setLogs] = useState<LogItem[]>([]);
+  const [stats, setStats] = useState<LogStats>({ total: 0, failures: 0, fallbacks: 0, avg_latency_ms: 0 });
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +40,9 @@ export function LogsPage() {
     const params = new URLSearchParams();
     if (query) params.set("query", query);
     if (onlyFallback) params.set("only_fallback", "true");
+    if (providerFilter) params.set("provider", providerFilter);
+    if (apiFormatFilter) params.set("api_format", apiFormatFilter);
+    if (statusFilter !== "all") params.set("status", statusFilter);
     params.set("limit", "100");
 
     setLoading(true);
@@ -36,15 +51,16 @@ export function LogsPage() {
       .then((payload) => {
         const items = (payload.data ?? []) as LogItem[];
         setLogs(items);
+        setStats(payload.stats ?? { total: items.length, failures: 0, fallbacks: 0, avg_latency_ms: 0 });
         setSelectedId((current) => current || items[0]?.id || "");
       })
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [query, onlyFallback]);
+  }, [query, onlyFallback, providerFilter, apiFormatFilter, statusFilter]);
 
-  const filtered = useMemo(() => logs, [logs]);
-  const active = filtered.find((item) => item.id === selectedId) ?? filtered[0];
+  const providers = useMemo(() => Array.from(new Set(logs.map((item) => item.provider_id))).sort(), [logs]);
+  const active = logs.find((item) => item.id === selectedId) ?? logs[0];
 
   return (
     <section className="page-grid split-layout logs-layout">
@@ -52,7 +68,7 @@ export function LogsPage() {
         <SectionHeader
           eyebrow="运行日志"
           title="异常流 · 备用切换 · 请求详情"
-          description="现在这里展示的已经是 RequestLog 里的真实请求链路，而不再是演示数据。"
+          description="这里已经支持更完整的真实日志筛选。"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${onlyFallback ? "active-chip" : ""}`} onClick={() => setOnlyFallback((value) => !value)}>
@@ -63,9 +79,10 @@ export function LogsPage() {
         />
 
         <div className="context-strip">
-          <div className="metric-pill">匹配结果 {filtered.length}</div>
-          <div className="metric-pill">备用切换 {filtered.filter((item) => item.fallback_used).length}</div>
-          <div className="metric-pill">搜索状态 {query ? "已筛选" : "全部"}</div>
+          <div className="metric-pill">匹配结果 {logs.length}</div>
+          <div className="metric-pill">备用切换 {stats.fallbacks}</div>
+          <div className="metric-pill">失败请求 {stats.failures}</div>
+          <div className="metric-pill">平均延迟 {stats.avg_latency_ms} 毫秒</div>
         </div>
 
         <label className="search-box">
@@ -73,14 +90,17 @@ export function LogsPage() {
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="按路径、trace、fallback、错误信息搜索" />
         </label>
 
+        <div className="inline-actions" style={{ marginBottom: 16 }}>
+          <input value={providerFilter} onChange={(e) => setProviderFilter(e.target.value)} placeholder="筛选 Provider" />
+          <input value={apiFormatFilter} onChange={(e) => setApiFormatFilter(e.target.value)} placeholder="筛选 API 格式，如 openai / claude" />
+          <button type="button" className={`ghost-button compact ${statusFilter === "failed" ? "active-chip" : ""}`} onClick={() => setStatusFilter((v) => v === "failed" ? "all" : "failed")}>只看失败</button>
+        </div>
+
         {loading ? (
-          <article className="luxury-panel nested-panel empty-state-card">
-            <strong>日志加载中</strong>
-            <p>正在读取真实请求日志…</p>
-          </article>
-        ) : filtered.length ? (
+          <article className="luxury-panel nested-panel empty-state-card"><strong>日志加载中</strong><p>正在读取真实请求日志…</p></article>
+        ) : logs.length ? (
           <div className="stack-list">
-            {filtered.map((log) => (
+            {logs.map((log) => (
               <button key={log.id} type="button" className={`select-card ${active?.id === log.id ? "active" : ""}`} onClick={() => setSelectedId(log.id)}>
                 <div>
                   <strong>{log.path}</strong>
@@ -92,10 +112,7 @@ export function LogsPage() {
             ))}
           </div>
         ) : (
-          <article className="luxury-panel nested-panel empty-state-card">
-            <strong>没有匹配到日志</strong>
-            <p>换个关键词，或者取消「只看备用切换」筛选试试。</p>
-          </article>
+          <article className="luxury-panel nested-panel empty-state-card"><strong>没有匹配到日志</strong><p>换个筛选条件试试。</p></article>
         )}
       </article>
 
@@ -107,11 +124,9 @@ export function LogsPage() {
             <div className="metric-pill">厂商：{active.provider_id}</div>
             <div className="metric-pill">耗时：{active.latency_ms} 毫秒</div>
             <div className="metric-pill">状态：{active.status_label}</div>
+            <div className="metric-pill">状态码：{active.status_code}</div>
             <div className="metric-pill">Trace：{active.trace_id || "暂无"}</div>
-            <article className="luxury-panel nested-panel detail-card">
-              <strong>详细说明</strong>
-              <p>{active.detail}</p>
-            </article>
+            <article className="luxury-panel nested-panel detail-card"><strong>详细说明</strong><p>{active.detail}</p></article>
             <article className="luxury-panel nested-panel detail-card">
               <strong>调用链路</strong>
               <p>请求格式：{String(active.metadata?.apiFormat ?? "unknown")}</p>
@@ -120,12 +135,10 @@ export function LogsPage() {
               <p>主 Provider：{String(active.metadata?.provider ?? active.provider_id)}</p>
               <p>Fallback 尝试：{active.fallback_tried?.length ? active.fallback_tried.join(" → ") : "无"}</p>
             </article>
+            <article className="luxury-panel nested-panel detail-card"><strong>当前筛选 Provider</strong><p>{providers.length ? providers.join("、") : "暂无"}</p></article>
           </div>
         ) : (
-          <article className="luxury-panel nested-panel empty-state-card">
-            <strong>暂无详情</strong>
-            <p>先在左边选一条日志，或者放宽筛选条件。</p>
-          </article>
+          <article className="luxury-panel nested-panel empty-state-card"><strong>暂无详情</strong><p>先在左边选一条日志，或者放宽筛选条件。</p></article>
         )}
       </article>
     </section>
