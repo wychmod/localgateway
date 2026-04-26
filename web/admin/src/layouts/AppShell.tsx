@@ -114,7 +114,7 @@ const fallbackDesktopStatus: DesktopStatus = {
 
 export function AppShell({ children }: PropsWithChildren) {
   const { theme, setTheme } = useUIStore();
-  const { notices, dismissNotice, keys, providers, pushNotice } = useAdminStore();
+  const { notices, dismissNotice, keys, providers, pushNotice, hydrate } = useAdminStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -141,6 +141,10 @@ export function AppShell({ children }: PropsWithChildren) {
       persistWindowState({ ...windowState, lastRoute: location.pathname || "/dashboard" });
     }
   }, [location.pathname, windowState]);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
     void fetchDesktopStatus().then((status) => {

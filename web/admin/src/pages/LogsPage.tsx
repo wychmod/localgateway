@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Search } from "lucide-react";
+import { AlertTriangle, Download, Search } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 
 type LogItem = {
@@ -26,6 +26,9 @@ type LogStats = {
 
 export function LogsPage() {
   const [query, setQuery] = useState("");
+  const [traceQuery, setTraceQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [onlyFallback, setOnlyFallback] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("");
@@ -35,16 +38,19 @@ export function LogsPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  const params = new URLSearchParams();
+  if (query) params.set("query", query);
+  if (traceQuery) params.set("trace", traceQuery);
+  if (fromDate) params.set("from", fromDate);
+  if (toDate) params.set("to", toDate);
+  if (onlyFallback) params.set("only_fallback", "true");
+  if (providerFilter) params.set("provider", providerFilter);
+  if (apiFormatFilter) params.set("api_format", apiFormatFilter);
+  if (statusFilter !== "all") params.set("status", statusFilter);
+  params.set("limit", "100");
+
   useEffect(() => {
     const controller = new AbortController();
-    const params = new URLSearchParams();
-    if (query) params.set("query", query);
-    if (onlyFallback) params.set("only_fallback", "true");
-    if (providerFilter) params.set("provider", providerFilter);
-    if (apiFormatFilter) params.set("api_format", apiFormatFilter);
-    if (statusFilter !== "all") params.set("status", statusFilter);
-    params.set("limit", "100");
-
     setLoading(true);
     fetch(`/admin/api/logs?${params.toString()}`, { signal: controller.signal })
       .then((res) => res.json())
@@ -57,10 +63,13 @@ export function LogsPage() {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [query, onlyFallback, providerFilter, apiFormatFilter, statusFilter]);
+  }, [query, traceQuery, fromDate, toDate, onlyFallback, providerFilter, apiFormatFilter, statusFilter]);
 
-  const providers = useMemo(() => Array.from(new Set(logs.map((item) => item.provider_id))).sort(), [logs]);
   const active = logs.find((item) => item.id === selectedId) ?? logs[0];
+
+  const handleExport = () => {
+    window.open(`/admin/api/logs/export?${params.toString()}`, "_blank");
+  };
 
   return (
     <section className="page-grid split-layout logs-layout">
@@ -68,11 +77,14 @@ export function LogsPage() {
         <SectionHeader
           eyebrow="运行日志"
           title="异常流 · 备用切换 · 请求详情"
-          description="这里已经支持更完整的真实日志筛选。"
+          description="这里已经支持时间范围、trace 搜索，以及按当前筛选结果导出日志。"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${onlyFallback ? "active-chip" : ""}`} onClick={() => setOnlyFallback((value) => !value)}>
                 <AlertTriangle size={14} /> 只看备用切换
+              </button>
+              <button type="button" className="ghost-button compact" onClick={handleExport}>
+                <Download size={14} /> 导出日志
               </button>
             </>
           }
@@ -87,8 +99,14 @@ export function LogsPage() {
 
         <label className="search-box">
           <span><Search size={16} /></span>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="按路径、trace、fallback、错误信息搜索" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="按路径、fallback、错误信息搜索" />
         </label>
+
+        <div className="inline-actions" style={{ marginBottom: 16 }}>
+          <input value={traceQuery} onChange={(e) => setTraceQuery(e.target.value)} placeholder="精确搜索 Trace ID" />
+          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+        </div>
 
         <div className="inline-actions" style={{ marginBottom: 16 }}>
           <input value={providerFilter} onChange={(e) => setProviderFilter(e.target.value)} placeholder="筛选 Provider" />
@@ -135,7 +153,6 @@ export function LogsPage() {
               <p>主 Provider：{String(active.metadata?.provider ?? active.provider_id)}</p>
               <p>Fallback 尝试：{active.fallback_tried?.length ? active.fallback_tried.join(" → ") : "无"}</p>
             </article>
-            <article className="luxury-panel nested-panel detail-card"><strong>当前筛选 Provider</strong><p>{providers.length ? providers.join("、") : "暂无"}</p></article>
           </div>
         ) : (
           <article className="luxury-panel nested-panel empty-state-card"><strong>暂无详情</strong><p>先在左边选一条日志，或者放宽筛选条件。</p></article>

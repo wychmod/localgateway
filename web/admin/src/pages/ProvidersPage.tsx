@@ -18,7 +18,7 @@ const emptyProvider = (count: number) => ({
 });
 
 export function ProvidersPage() {
-  const { providers, selectedProviderId, setSelectedProvider, saveProvider, pushNotice } = useAdminStore();
+  const { providers, selectedProviderId, setSelectedProvider, saveProvider, testProvider, discoverProviderModels, pushNotice } = useAdminStore();
   const active = useMemo(
     () => providers.find((item) => item.id === selectedProviderId) ?? providers[0],
     [providers, selectedProviderId]
@@ -62,13 +62,11 @@ export function ProvidersPage() {
               <button
                 type="button"
                 className="ghost-button compact"
-                onClick={() =>
-                  pushNotice({
-                    tone: "info",
-                    title: "模型发现已排队",
-                    message: `${form.name} 的模型发现入口已预留，联调后会拉取真实模型列表。`
-                  })
-                }
+                onClick={async () => {
+                  if (!form.id) return;
+                  const models = await discoverProviderModels(form.id);
+                  if (models.length) setForm({ ...form, models });
+                }}
               >
                 <RefreshCcw size={16} /> 发现模型
               </button>
@@ -148,33 +146,24 @@ export function ProvidersPage() {
           <button
             type="button"
             className="primary-button"
-            onClick={() => saveProvider(form)}
+            onClick={() => void saveProvider(form)}
           >
             保存配置
           </button>
           <button
             type="button"
             className="ghost-button"
-            onClick={() =>
-              pushNotice({
-                tone: "success",
-                title: "连接测试通过",
-                message: `${form.name} 返回 200 正常，当前延迟表现处于可接受区间。`
-              })
-            }
+            onClick={() => void testProvider(form.id)}
           >
             <Wifi size={16} /> 测试连接
           </button>
           <button
             type="button"
             className="ghost-button"
-            onClick={() =>
-              pushNotice({
-                tone: "info",
-                title: "模型发现已触发",
-                message: `后续接上真实接口后，会把 ${form.name} 的模型列表回填到当前表单。`
-              })
-            }
+            onClick={async () => {
+              const models = await discoverProviderModels(form.id);
+              if (models.length) setForm({ ...form, models });
+            }}
           >
             自动发现模型
           </button>

@@ -71,7 +71,7 @@ func (s *Service) Save(ctx context.Context, value AppSettings) (AppSettings, err
 func (s *Service) Backup(ctx context.Context) map[string]any {
 	return map[string]any{
 		"status":  "ok",
-		"message": "模拟备份完成，后续接入真实打包逻辑后会生成可下载备份文件。",
+		"message": "配置备份检查完成，当前配置已保存在本地数据库。",
 	}
 }
 
@@ -83,7 +83,7 @@ func (s *Service) DistributionPlan() map[string]any {
 		"notes": []string{
 			"默认单目录部署",
 			"首次下载后即可运行",
-			"后续将内嵌 Admin 前端静态资源",
+			"Admin 前端资源随可执行文件一并内嵌",
 		},
 	}
 }

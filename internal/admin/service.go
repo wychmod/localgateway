@@ -22,9 +22,12 @@ type Overview struct {
 type DashboardData struct {
 	Overview          Overview                     `json:"overview"`
 	Trend             []usage.TrendPoint           `json:"trend"`
+	FailureTrend      []requestlog.TrendPoint      `json:"failure_trend"`
 	ProviderBreakdown []usage.ProviderBreakdown    `json:"provider_breakdown"`
 	ProviderHealth    []provider.HealthCheckResult `json:"provider_health"`
 	RecentLogs        []requestlog.Item            `json:"recent_logs"`
+	HotModels         []usage.ModelBreakdown       `json:"hot_models"`
+	ProviderTop       []usage.ProviderBreakdown    `json:"provider_top"`
 	LogStats          requestlog.Stats             `json:"log_stats"`
 	Alerts            []map[string]string          `json:"alerts"`
 }
@@ -84,7 +87,15 @@ func (s *Service) Dashboard(ctx context.Context) (DashboardData, error) {
 	if err != nil {
 		return DashboardData{}, err
 	}
+	failureTrend, err := s.requestLogs.Trend(ctx, 7)
+	if err != nil {
+		return DashboardData{}, err
+	}
 	breakdown, err := s.usage.ProviderBreakdown(ctx)
+	if err != nil {
+		return DashboardData{}, err
+	}
+	hotModels, err := s.usage.ModelBreakdown(ctx)
 	if err != nil {
 		return DashboardData{}, err
 	}
@@ -112,7 +123,14 @@ func (s *Service) Dashboard(ctx context.Context) (DashboardData, error) {
 			alerts = append(alerts, map[string]string{"level": "critical", "title": "请求失败", "description": item.ErrorMessage})
 		}
 	}
-	return DashboardData{Overview: overview, Trend: trend, ProviderBreakdown: breakdown, ProviderHealth: providerHealth, RecentLogs: recentLogs, LogStats: logStats, Alerts: alerts}, nil
+	providerTop := breakdown
+	if len(providerTop) > 5 {
+		providerTop = providerTop[:5]
+	}
+	if len(hotModels) > 5 {
+		hotModels = hotModels[:5]
+	}
+	return DashboardData{Overview: overview, Trend: trend, FailureTrend: failureTrend, ProviderBreakdown: breakdown, ProviderHealth: providerHealth, RecentLogs: recentLogs, HotModels: hotModels, ProviderTop: providerTop, LogStats: logStats, Alerts: alerts}, nil
 }
 
 func (s *Service) Analytics(ctx context.Context, days int) (AnalyticsData, error) {

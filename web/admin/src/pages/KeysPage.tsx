@@ -19,7 +19,7 @@ const createEmptyKey = () => ({
 });
 
 export function KeysPage() {
-  const { keys, selectedKeyId, setSelectedKey, saveKey, pushNotice } = useAdminStore();
+  const { keys, selectedKeyId, setSelectedKey, saveKey, rotateKey, revokeKey, pushNotice } = useAdminStore();
   const active = useMemo(() => keys.find((item) => item.id === selectedKeyId) ?? keys[0], [keys, selectedKeyId]);
   const [form, setForm] = useState(active ?? createEmptyKey());
 
@@ -143,25 +143,28 @@ export function KeysPage() {
         </div>
 
         <div className="inline-actions sticky-actions">
-          <button type="button" className="primary-button" onClick={() => saveKey(form)}>保存变更</button>
+          <button type="button" className="primary-button" onClick={() => void saveKey(form)}>保存变更</button>
           <button
             type="button"
             className="ghost-button"
-            onClick={() => pushNotice({ tone: "success", title: "密钥已复制", message: `${form.name} 的展示密钥已复制到剪贴板流程占位中。` })}
+            onClick={() => {
+              void navigator.clipboard?.writeText(form.displayKey);
+              pushNotice({ tone: "success", title: "密钥已复制", message: `${form.name} 的展示密钥已复制到剪贴板。` });
+            }}
           >
             <Copy size={16} /> 复制密钥
           </button>
           <button
             type="button"
             className="ghost-button"
-            onClick={() => pushNotice({ tone: "warning", title: "轮换流程已预留", message: "后续接上真实接口后，会先生成新密钥，再给旧密钥留出平滑迁移窗口。" })}
+            onClick={() => void rotateKey(form.id)}
           >
             <RotateCcw size={16} /> 轮换密钥
           </button>
           <button
             type="button"
             className="ghost-button"
-            onClick={() => pushNotice({ tone: "warning", title: "吊销动作待确认", message: `${form.name} 当前只做交互演示，接后端后建议增加二次确认弹层。` })}
+            onClick={() => void revokeKey(form.id)}
           >
             <ShieldAlert size={16} /> 吊销密钥
           </button>

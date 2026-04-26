@@ -70,6 +70,7 @@ func (r *Router) mount() {
 	r.mux.Post("/v1/messages", r.handleClaudeMessages)
 
 	r.mux.Route("/admin/api", func(adminRouter chi.Router) {
+		adminRouter.Get("/logs/export", r.handleAdminLogsExport)
 		adminRouter.Get("/dashboard", r.handleAdminDashboard)
 		adminRouter.Get("/analytics", r.handleAdminAnalytics)
 		adminRouter.Get("/logs", r.handleAdminLogs)

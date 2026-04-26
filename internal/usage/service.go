@@ -44,10 +44,11 @@ type TrendPoint struct {
 }
 
 type ProviderBreakdown struct {
-	Name     string  `json:"name"`
-	Cost     float64 `json:"cost"`
-	Requests int64   `json:"requests"`
-	Tokens   int64   `json:"tokens"`
+	Name        string  `json:"name"`
+	Cost        float64 `json:"cost"`
+	Requests    int64   `json:"requests"`
+	Tokens      int64   `json:"tokens"`
+	SuccessRate float64 `json:"success_rate"`
 }
 
 type ModelBreakdown struct {
@@ -146,6 +147,7 @@ func (s *Service) ProviderBreakdown(ctx context.Context) ([]ProviderBreakdown, e
 		return nil, err
 	}
 	buckets := map[string]*ProviderBreakdown{}
+	successMap := map[string]int64{}
 	for _, item := range records {
 		name := item.ProviderID
 		bucket, ok := buckets[name]
@@ -156,9 +158,15 @@ func (s *Service) ProviderBreakdown(ctx context.Context) ([]ProviderBreakdown, e
 		bucket.Cost += item.TotalCostUSD
 		bucket.Requests++
 		bucket.Tokens += item.InputTokens + item.OutputTokens
+		if item.Success {
+			successMap[name]++
+		}
 	}
 	result := make([]ProviderBreakdown, 0, len(buckets))
-	for _, bucket := range buckets {
+	for name, bucket := range buckets {
+		if bucket.Requests > 0 {
+			bucket.SuccessRate = float64(successMap[name]) / float64(bucket.Requests)
+		}
 		result = append(result, *bucket)
 	}
 	sort.SliceStable(result, func(i, j int) bool { return result[i].Cost > result[j].Cost })
@@ -189,7 +197,7 @@ func (s *Service) ModelBreakdown(ctx context.Context) ([]ModelBreakdown, error) 
 	for _, bucket := range buckets {
 		result = append(result, *bucket)
 	}
-	sort.SliceStable(result, func(i, j int) bool { return result[i].Cost > result[j].Cost })
+	sort.SliceStable(result, func(i, j int) bool { return result[i].Requests > result[j].Requests })
 	return result, nil
 }
 

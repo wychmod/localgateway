@@ -3,14 +3,14 @@
   "name": "lingshu",
   "outputfilename": "Lingshu",
   "frontend": {
-    "dir": "frontend",
+    "dir": "web/admin",
     "install": "npm install",
     "build": "npm run build:wails",
     "dev": "npm run dev",
     "serve": "npx vite preview --port 5173"
   },
-  "assetdir": "frontend/dist",
-  "wailsjsdir": "frontend/src",
+  "assetdir": "web/admin/dist",
+  "wailsjsdir": "web/admin/src",
   "author": {
     "name": "Lingshu Team",
     "email": "team@lingshu.dev"
@@ -23,4 +23,5 @@
     "comments": "灵枢本地模型网关桌面版"
   }
 }
+
 

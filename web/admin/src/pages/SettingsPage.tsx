@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, PackageOpen, Save } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAdminStore } from "../store/admin-store";
 
 export function SettingsPage() {
-  const { settings, saveSettings } = useAdminStore();
+  const { settings, saveSettings, backupSettings } = useAdminStore();
   const [form, setForm] = useState(settings);
+
+  useEffect(() => {
+    setForm(settings);
+  }, [settings]);
 
   return (
     <section className="page-grid settings-layout">
@@ -14,7 +18,7 @@ export function SettingsPage() {
           eyebrow="系统设置"
           title="系统配置 · 全前端收口"
           description="端口、认证、日志、更新、备份和主题都不需要手动改配置文件。"
-          actions={<button type="button" className="primary-button" onClick={() => saveSettings(form)}><Save size={16} /> 保存设置</button>}
+          actions={<button type="button" className="primary-button" onClick={() => void saveSettings(form)}><Save size={16} /> 保存设置</button>}
         />
         <div className="form-grid">
           <label>
@@ -68,8 +72,8 @@ export function SettingsPage() {
           <div className="metric-pill">管理后台将内嵌至单一可执行文件</div>
           <div className="metric-pill">首次启动自动初始化数据库与默认配置</div>
           <div className="inline-actions">
-            <button type="button" className="ghost-button"><Download size={16} /> 导出打包说明</button>
-            <button type="button" className="ghost-button">生成便携版安装包</button>
+            <button type="button" className="ghost-button" onClick={() => void backupSettings()}><Download size={16} /> 导出打包说明</button>
+            <button type="button" className="ghost-button" onClick={() => void backupSettings()}>生成便携版安装包</button>
           </div>
         </div>
       </article>

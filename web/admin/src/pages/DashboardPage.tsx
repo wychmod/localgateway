@@ -1,8 +1,11 @@
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useEffect, useMemo, useState } from "react";
 import { distributionStatus, quickActions } from "../store/mock-data";
 import { providerStatusMap } from "../store/labels";
 import { fetchDesktopStatus, isDesktopMode, type DesktopStatus } from "../utils/desktop-bridge";
+
+type ProviderTop = { name: string; success_rate: number; requests: number; cost: number };
+type HotModel = { name: string; requests: number; cost: number; tokens: number };
 
 type DashboardPayload = {
   overview: {
@@ -18,9 +21,12 @@ type DashboardPayload = {
     };
   };
   trend: Array<{ day: string; cost: number; requests: number; tokens: number }>;
+  failure_trend: Array<{ day: string; failures: number; fallbacks: number }>;
   provider_breakdown: Array<{ name: string; cost: number; requests: number; tokens: number }>;
   provider_health: Array<{ status: string; latency_ms: number; message: string }>;
   recent_logs: Array<{ id: string; path: string; provider_id: string; latency_ms: number; status_label: string }>;
+  hot_models: HotModel[];
+  provider_top: ProviderTop[];
   log_stats: { total: number; failures: number; fallbacks: number; avg_latency_ms: number };
   alerts: Array<{ level: string; title: string; description: string }>;
 };
@@ -69,7 +75,7 @@ export function DashboardPage() {
         <div>
           <span className="eyebrow">系统总览</span>
           <h2>网关配置 · 运行状态 · 分发进度</h2>
-          <p>首页现在不仅接了真实聚合数据，还把失败请求和备用切换统计拉上来了。</p>
+          <p>首页现在开始展示失败趋势、备用切换趋势，以及热点模型与 Provider 成功率排行。</p>
           <div className="inline-actions hero-actions">
             {quickActions.map((action) => (
               <button key={action} type="button" className="ghost-button compact">{action}</button>
@@ -112,33 +118,41 @@ export function DashboardPage() {
       </section>
 
       <section className="luxury-panel dashboard-side-panel alert-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">风险提醒</span><h3>当前告警与提示</h3></div></div>
-        <div className="stack-list">
-          {(data?.alerts?.length ? data.alerts : [{ level: "info", title: "暂无告警", description: "当前真实链路还没有产生异常或备用切换。" }]).map((alert) => (
-            <article key={alert.title + alert.description} className={`luxury-panel nested-panel alert-card ${alert.level}`}><strong>{alert.title}</strong><p>{alert.description}</p></article>
-          ))}
+        <div className="panel-heading compact-heading"><div><span className="eyebrow">失败 / 备用趋势</span><h3>最近 7 日失败与切换</h3></div></div>
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data?.failure_trend ?? []}>
+              <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
+              <XAxis dataKey="day" stroke="rgba(255,255,255,0.4)" />
+              <Tooltip contentStyle={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(15,18,32,0.92)" }} />
+              <Line type="monotone" dataKey="failures" stroke="#f87171" strokeWidth={3} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="fallbacks" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </section>
 
       <section className="luxury-panel providers-panel">
-        <div className="panel-heading"><div><span className="eyebrow">厂商健康度</span><h3>线路状态与流量占比</h3></div></div>
+        <div className="panel-heading"><div><span className="eyebrow">Provider 成功率排行</span><h3>按成功率查看当前主要 Provider</h3></div></div>
         <div className="provider-list">
-          {(data?.provider_health ?? []).map((item, index) => (
-            <article key={`${item.message}-${index}`} className="provider-row">
-              <div><strong>{item.message}</strong><span>延迟 {item.latency_ms} 毫秒</span></div>
-              <span className={`status-pill ${item.status}`}>{providerStatusMap[item.status] ?? item.status}</span>
+          {(data?.provider_top ?? []).map((item) => (
+            <article key={item.name} className="provider-row">
+              <div><strong>{item.name}</strong><span>请求 {item.requests} 次 · 费用 {item.cost.toFixed(2)} 美元</span></div>
+              <span className="status-pill healthy">成功率 {(item.success_rate * 100).toFixed(1)}%</span>
             </article>
           ))}
         </div>
       </section>
 
       <section className="luxury-panel dashboard-side-panel distribution-card-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">分发状态</span><h3>下载即用准备情况</h3></div></div>
-        <div className="distribution-stack">
-          <div className="metric-pill">分发包：{distributionStatus.artifact}</div>
-          <div className="metric-pill">分发方式：{distributionStatus.mode}</div>
-          <div className="metric-pill">打包说明：{distributionStatus.bundle}</div>
-          <div className="metric-pill">初始化：{distributionStatus.init}</div>
+        <div className="panel-heading compact-heading"><div><span className="eyebrow">热点模型</span><h3>最近请求最活跃的模型</h3></div></div>
+        <div className="stack-list">
+          {(data?.hot_models ?? []).map((item) => (
+            <article key={item.name} className="luxury-panel nested-panel detail-card">
+              <strong>{item.name}</strong>
+              <p>请求 {item.requests} 次 · 费用 {item.cost.toFixed(2)} 美元 · Tokens {item.tokens}</p>
+            </article>
+          ))}
         </div>
       </section>
 

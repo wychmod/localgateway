@@ -3,17 +3,18 @@ package main
 import (
 	"context"
 	"embed"
+	"io/fs"
 	"net/http"
 	"strings"
 
 	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2"
-	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:web/admin/dist
@@ -22,11 +23,16 @@ var assets embed.FS
 type spaProxy struct {
 	router http.Handler
 	static http.Handler
+	assets fs.FS
 	ready  bool
 }
 
 func newSPAProxy() *spaProxy {
-	return &spaProxy{static: http.FileServer(http.FS(assets))}
+	adminAssets, err := fs.Sub(assets, "web/admin/dist")
+	if err != nil {
+		adminAssets = assets
+	}
+	return &spaProxy{static: http.FileServer(http.FS(adminAssets)), assets: adminAssets}
 }
 
 func (p *spaProxy) setRouter(router http.Handler) {
@@ -36,7 +42,7 @@ func (p *spaProxy) setRouter(router http.Handler) {
 
 func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	if strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/auth/") {
+	if strings.HasPrefix(path, "/admin/api/") || strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/auth/") {
 		if !p.ready || p.router == nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -51,7 +57,7 @@ func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if cleanPath == "" {
 		cleanPath = "index.html"
 	}
-	if _, err := assets.Open(cleanPath); err != nil {
+	if _, err := p.assets.Open(cleanPath); err != nil {
 		r.URL.Path = "/"
 	}
 	p.static.ServeHTTP(w, r)
@@ -171,7 +177,7 @@ func main() {
 			return true
 		},
 		OnShutdown: desktopApp.Shutdown,
-		Bind: []interface{}{desktopApp},
+		Bind:       []interface{}{desktopApp},
 	})
 
 	if err != nil {

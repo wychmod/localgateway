@@ -2,10 +2,17 @@ export type ProviderRecord = {
   id: string;
   name: string;
   type: string;
+  base_url?: string;
   baseURL: string;
-  status: "healthy" | "warning" | "disabled";
+  apiKey?: string;
+  organization_id?: string;
+  enabled: boolean;
+  status: "healthy" | "warning" | "disabled" | "active" | string;
   priority: number;
+  models_json?: string;
   models: string[];
+  rate_limit_rpm?: number;
+  rate_limit_tpm?: number;
   rpm: number;
   tpm: number;
 };
@@ -13,35 +20,65 @@ export type ProviderRecord = {
 export type LocalKeyRecord = {
   id: string;
   name: string;
+  display_key?: string;
   displayKey: string;
+  allowed_models_json?: string;
+  allowed_providers_json?: string;
   allowedModels: string[];
   allowedProviders: string[];
+  monthly_budget?: number;
   monthlyBudget: number;
+  current_spend?: number;
   currentSpend: number;
+  token_budget?: number;
   tokenBudget: number;
+  current_tokens?: number;
   currentTokens: number;
+  enabled: boolean;
+  revoked_at?: string | null;
+  expires_at?: string | null;
   status: "active" | "warning" | "revoked";
 };
 
 export type RoutingRuleRecord = {
   id: string;
+  model_pattern?: string;
   modelPattern: string;
   strategy: string;
+  provider_chain?: string;
   providerChain: string[];
+  fallback_chain?: string;
   fallbackChain: string[];
   enabled: boolean;
+};
+
+export type RoutingSimulation = {
+  model: string;
+  key: string;
+  format: string;
+  target: string;
+  fallback: string;
+  cost: string;
+  ttft: string;
 };
 
 export type SettingsRecord = {
   host: string;
   port: number;
+  admin_path?: string;
   adminPath: string;
+  admin_username?: string;
   adminUsername: string;
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark" | "system" | string;
+  update_channel?: string;
   updateChannel: string;
+  backup_interval?: string;
   backupInterval: string;
+  log_level?: string;
   logLevel: string;
+  retention_days?: number;
   retentionDays: number;
+  bundle_mode?: string;
   bundleMode: string;
 };
 
@@ -51,6 +88,7 @@ export const providerRecords: ProviderRecord[] = [
     name: "OpenAI Primary",
     type: "openai",
     baseURL: "https://api.openai.com",
+    enabled: true,
     status: "healthy",
     priority: 1,
     models: ["gpt-4o", "gpt-4o-mini", "o3-mini"],
@@ -62,6 +100,7 @@ export const providerRecords: ProviderRecord[] = [
     name: "Claude Premium",
     type: "anthropic",
     baseURL: "https://api.anthropic.com",
+    enabled: true,
     status: "healthy",
     priority: 2,
     models: ["claude-sonnet-4", "claude-haiku-4"],
@@ -73,6 +112,7 @@ export const providerRecords: ProviderRecord[] = [
     name: "DeepSeek Saver",
     type: "deepseek",
     baseURL: "https://api.deepseek.com",
+    enabled: true,
     status: "warning",
     priority: 3,
     models: ["deepseek-chat", "deepseek-reasoner"],
@@ -92,6 +132,7 @@ export const localKeyRecords: LocalKeyRecord[] = [
     currentSpend: 42.8,
     tokenBudget: 10000000,
     currentTokens: 2340000,
+    enabled: true,
     status: "active"
   },
   {
@@ -104,6 +145,7 @@ export const localKeyRecords: LocalKeyRecord[] = [
     currentSpend: 28.1,
     tokenBudget: 8500000,
     currentTokens: 1720000,
+    enabled: true,
     status: "warning"
   }
 ];
@@ -129,7 +171,7 @@ export const routingRuleRecords: RoutingRuleRecord[] = [
 
 export const settingsRecord: SettingsRecord = {
   host: "127.0.0.1",
-  port: 9090,
+  port: 18743,
   adminPath: "/admin",
   adminUsername: "admin",
   theme: "system",
@@ -139,3 +181,4 @@ export const settingsRecord: SettingsRecord = {
   retentionDays: 30,
   bundleMode: "single-binary"
 };
+

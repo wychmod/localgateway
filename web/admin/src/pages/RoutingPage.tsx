@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, Route } from "lucide-react";
 import { DrawerCard } from "../components/DrawerCard";
 import { SectionHeader } from "../components/SectionHeader";
+import { RoutingSimulation } from "../store/entities";
 import { useAdminStore } from "../store/admin-store";
 
 const createEmptyRule = () => ({
@@ -14,18 +15,18 @@ const createEmptyRule = () => ({
 });
 
 export function RoutingPage() {
-  const { rules, saveRule, pushNotice } = useAdminStore();
+  const { rules, saveRule, testRouting, pushNotice } = useAdminStore();
   const [selectedId, setSelectedId] = useState(rules[0]?.id);
   const active = useMemo(() => rules.find((item) => item.id === selectedId) ?? rules[0], [rules, selectedId]);
   const [form, setForm] = useState(active ?? createEmptyRule());
-  const [simulation] = useState({
+  const [simulation, setSimulation] = useState<RoutingSimulation>({
     model: "gpt-4o",
-    key: "Codex 专用密钥",
-    format: "OpenAI 兼容格式",
-    target: "OpenAI 主线路",
-    fallback: "Azure 备用线路 → OpenRouter 备用出口",
-    cost: "0.012 - 0.024 美元",
-    ttft: "180 - 260 毫秒"
+    key: "默认本地密钥",
+    format: "openai",
+    target: "等待模拟",
+    fallback: "等待模拟",
+    cost: "-",
+    ttft: "-"
   });
 
   useEffect(() => {
@@ -108,11 +109,14 @@ export function RoutingPage() {
         </div>
 
         <div className="inline-actions sticky-actions">
-          <button type="button" className="primary-button" onClick={() => saveRule(form)}>保存规则</button>
+          <button type="button" className="primary-button" onClick={() => void saveRule(form)}>保存规则</button>
           <button
             type="button"
             className="ghost-button"
-            onClick={() => pushNotice({ tone: "success", title: "链路校验通过", message: `${form.modelPattern} 的路由链与备用顺序在交互校验中通过。` })}
+            onClick={async () => {
+              const result = await testRouting({ model: simulation.model, localKey: simulation.key, format: simulation.format });
+              if (result) setSimulation(result);
+            }}
           >
             <Route size={16} /> 验证链路
           </button>
@@ -121,6 +125,20 @@ export function RoutingPage() {
 
       <article className="luxury-panel page-panel simulation-panel">
         <SectionHeader eyebrow="路由模拟" title="路由测试器" description="给定模型、密钥和请求格式，直接查看分发目标。" />
+        <div className="form-grid" style={{ marginBottom: 16 }}>
+          <label>
+            <span>测试模型</span>
+            <input value={simulation.model} onChange={(e) => setSimulation({ ...simulation, model: e.target.value })} placeholder="例如：gpt-4o" />
+          </label>
+          <label>
+            <span>本地密钥</span>
+            <input value={simulation.key} onChange={(e) => setSimulation({ ...simulation, key: e.target.value })} placeholder="例如：lg-..." />
+          </label>
+          <label>
+            <span>请求格式</span>
+            <input value={simulation.format} onChange={(e) => setSimulation({ ...simulation, format: e.target.value })} placeholder="openai / claude" />
+          </label>
+        </div>
         <div className="simulation-grid">
           <div className="metric-pill"><Activity size={16} /> 模型：{simulation.model}</div>
           <div className="metric-pill">密钥：{simulation.key}</div>
