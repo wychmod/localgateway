@@ -53,14 +53,42 @@ func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cleanPath := strings.TrimPrefix(path, "/")
-	if cleanPath == "" {
-		cleanPath = "index.html"
+	cleanPath := normalizeAssetPath(path)
+	if cleanPath == "" || cleanPath == "." {
+		r.URL.Path = "/index.html"
+		p.static.ServeHTTP(w, r)
+		return
 	}
-	if _, err := p.assets.Open(cleanPath); err != nil {
-		r.URL.Path = "/"
+
+	if _, err := p.assets.Open(cleanPath); err == nil {
+		r.URL.Path = "/" + cleanPath
+		p.static.ServeHTTP(w, r)
+		return
 	}
+
+	// Only application routes should fall back to index.html.
+	// Missing static assets must remain 404 instead of returning HTML.
+	if isStaticAssetRequest(cleanPath) {
+		http.NotFound(w, r)
+		return
+	}
+
+	r.URL.Path = "/index.html"
 	p.static.ServeHTTP(w, r)
+}
+
+func normalizeAssetPath(path string) string {
+	cleanPath := strings.TrimPrefix(path, "/")
+	cleanPath = strings.TrimPrefix(cleanPath, "admin/")
+	return cleanPath
+}
+
+func isStaticAssetRequest(path string) bool {
+	lastSegment := path
+	if idx := strings.LastIndex(path, "/"); idx >= 0 {
+		lastSegment = path[idx+1:]
+	}
+	return strings.Contains(lastSegment, ".")
 }
 
 func buildDesktopMenu(app *DesktopApp) *menu.Menu {
@@ -96,6 +124,9 @@ func runDesktopTray(app *DesktopApp) {
 	go systray.Run(func() {
 		systray.SetTitle("灵枢")
 		systray.SetTooltip("灵枢桌面版")
+		if len(trayIcon) > 0 {
+			systray.SetIcon(trayIcon)
+		}
 
 		showItem := systray.AddMenuItem("显示主窗口", "恢复并显示窗口")
 		hideItem := systray.AddMenuItem("隐藏到托盘", "隐藏主窗口")

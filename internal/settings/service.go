@@ -31,22 +31,34 @@ func NewService(db *gorm.DB) *Service {
 	return &Service{db: db}
 }
 
+func defaultAppSettings() AppSettings {
+	return AppSettings{
+		Host:           "127.0.0.1",
+		Port:           18743,
+		AdminPath:      "/admin",
+		AdminUsername:  "admin",
+		Theme:          "system",
+		UpdateChannel:  "stable",
+		BackupInterval: "24h",
+		LogLevel:       "standard",
+		RetentionDays:  30,
+		BundleMode:     "single-binary",
+	}
+}
+
 func (s *Service) Get(ctx context.Context) (AppSettings, error) {
 	var record models.Setting
-	if err := s.db.WithContext(ctx).Where("key = ?", "app_settings").First(&record).Error; err != nil {
-		defaultSettings := AppSettings{
-			Host:           "127.0.0.1",
-			Port:           18743,
-			AdminPath:      "/admin",
-			AdminUsername:  "admin",
-			Theme:          "system",
-			UpdateChannel:  "stable",
-			BackupInterval: "24h",
-			LogLevel:       "standard",
-			RetentionDays:  30,
-			BundleMode:     "single-binary",
+	result := s.db.WithContext(ctx).Where("key = ?", "app_settings").Limit(1).Find(&record)
+	if result.Error != nil {
+		return AppSettings{}, result.Error
+	}
+	if result.RowsAffected == 0 {
+		defaultSettings := defaultAppSettings()
+		saved, err := s.Save(ctx, defaultSettings)
+		if err != nil {
+			return AppSettings{}, err
 		}
-		return defaultSettings, nil
+		return saved, nil
 	}
 	var value AppSettings
 	if err := json.Unmarshal([]byte(record.ValueJSON), &value); err != nil {

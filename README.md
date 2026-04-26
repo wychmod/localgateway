@@ -1,202 +1,267 @@
 # 灵枢（Lingshu）
 
-<p align="center">
-  <img alt="Go" src="https://img.shields.io/badge/Go-1.22%2B-00ADD8?style=for-the-badge&logo=go&logoColor=white" />
-  <img alt="React" src="https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-Pure%20Go-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
-  <img alt="Platform" src="https://img.shields.io/badge/Platform-Windows%20Portable-4B5563?style=for-the-badge" />
-</p>
+> 本地 AI 网关 · 多模型调度中枢 · 高质感桌面控制台
 
-<p align="center">
-  <strong>一个面向本地部署场景的多模型网关与管理平台。</strong>
-</p>
+灵枢是一个面向本地部署与私有化使用场景的 AI 网关产品。它把多 Provider 接入、本地密钥管控、模型路由、请求日志、费用分析和桌面运行体验收束到一个统一控制台中，让用户通过一套高质感界面完成日常运维，而不是在配置文件、脚本和终端之间来回切换。
 
-<p align="center">
-  聚合多模型厂商、统一 OpenAI 风格入口、提供高质感 Admin 控制台，支持单目录分发，解压即可运行。
-</p>
+它不是一个简单的转发服务，而是一个面向长期使用的本地 AI 控制中心：
 
-<p align="center">
-  <a href="#为什么是灵枢">为什么是灵枢</a> ·
-  <a href="#亮点速览">亮点速览</a> ·
-  <a href="#核心能力">核心能力</a> ·
-  <a href="#快速开始">快速开始</a> ·
-  <a href="#双版本说明">双版本说明</a> ·
-  <a href="#桌面版构建说明">桌面版构建说明</a>
-</p>
+> **灵枢 = 本地 AI 统一入口 + 多模型调度中枢 + 可视化控制台 + 桌面级交付体验。**
 
 ---
 
-## 为什么是灵枢
+## 概览
 
-很多本地 AI 工具都有同一个问题：
+灵枢适合这些场景：
 
-- 接口分散，Provider 各有各的地址与鉴权方式
-- 配置零碎，要么全靠环境变量，要么全靠手工改文件
-- 管理体验粗糙，日常维护像是在和一堆脚本掰手腕
-- 分发复杂，用户常常还没跑起来，热情已经先被依赖环境磨掉一半
-
-**灵枢** 想解决的，就是这类“能用，但不好用”的工程现实。
-
-它把本地网关、配置管理、Provider 管理、模型路由和可视化后台收敛到一个项目里，目标不是做一个“开发者才能驾驭”的半成品，而是做成一个：
-
-> **可以下载、可以解压、可以直接运行、也可以长期维护的本地模型网关产品。**
-
-一句话概括：
-
-**灵枢 = 本地多模型能力的统一入口 + 可视化控制台 + 便携式交付体验。**
-
----
-
-## 亮点速览
-
-- **统一入口**：将多 Provider 能力收敛到一个本地网关层
-- **控制台优先**：尽量把日常配置、检查、管理动作都放进 Admin
-- **Windows 友好**：偏向本地、便携、低依赖的使用体验
-- **纯 Go SQLite**：无需 CGO，更适合可分发场景
-- **嵌入式前端**：Admin 构建后可直接嵌入二进制交付
-- **产品感导向**：不是脚本集合，而是朝真正可交付工具打磨
+- **统一管理多 Provider**：将 OpenAI、Claude、DeepSeek 等不同接口收敛到一个本地网关；
+- **本地密钥分发**：为不同工具、成员或项目创建独立访问密钥，并设置预算和权限；
+- **模型路由控制**：决定不同模型请求应该走哪个 Provider，并配置备用链路；
+- **调用链路可观测**：查看请求日志、失败原因、备用切换和费用消耗；
+- **下载即用**：单目录便携式运行，尽量减少环境依赖。
 
 ---
 
 ## 核心能力
 
-### 1. 统一 AI API 网关
-- 提供统一的网关访问入口
-- 面向 OpenAI 风格接口进行兼容设计
-- 支持多 Provider 聚合接入的扩展方向
-- 支持模型发现、模型别名、路由分发等能力演进
+### 本地 AI 网关
 
-### 2. 高质感 Admin 控制台
-- 基于 React + Vite + TypeScript 构建
-- 提供 Dashboard、Providers、Keys、Routing、Settings、Logs、Analytics 等页面
-- 已补齐 Bootstrap、Security、Release、Version、Build Checks 等产品化页面
-- 前端视觉方向偏向真正可交付的桌面级 SaaS 体验
+灵枢作为本地统一入口，负责接收请求、鉴权、选择 Provider、转发请求并记录日志。
 
-### 3. 便携式分发
-- Admin 前端资源内嵌到 Go 二进制
-- 可组合为单目录便携包
-- 用户无需单独安装 Node.js 或 Go，即可日常运行
-- 更适合内部分发、私有部署、离线环境或半离线环境使用
+- OpenAI 兼容模型列表与聊天接口；
+- Claude / Anthropic 风格请求入口；
+- 本地密钥鉴权；
+- Provider 自动选择与路由规则匹配；
+- 备用链路切换；
+- 请求日志记录与使用量统计。
+
+### 桌面应用
+
+灵枢已具备桌面软件形态，提供独立窗口和系统托盘体验。
+
+- 桌面主窗口，支持最小化、最大化和还原；
+- 隐藏到系统托盘，从托盘恢复窗口；
+- 从桌面应用打开浏览器版管理后台；
+- 桌面自检与状态展示；
+- 恢复上次访问页面。
+
+### 高质感 Admin 控制台
+
+Admin 控制台是灵枢的主要操作入口，常用配置和管理动作都尽量放在前端完成。
+
+已包含页面：
+
+- **首页总览**：系统状态、费用趋势、Provider 排行、热点模型、最近请求链路；
+- **Provider 管理**：配置上游 AI 服务商，测试连接，自动发现模型；
+- **本地密钥**：创建、分配、轮换、吊销密钥，设置预算和权限；
+- **路由策略**：配置模型匹配规则、主链路和备用链路，执行路由模拟；
+- **请求日志**：查看请求详情、失败原因、Trace ID、Fallback 链路，支持筛选和导出；
+- **数据分析**：费用、请求量、令牌消耗分析，按 Provider、模型、密钥拆分；
+- **系统设置**：监听地址、端口、主题、日志级别等常用配置。
 
 ---
 
-## 快速开始
+## 快速启动
 
-### 默认访问地址
+以下命令默认在项目根目录执行。
 
-启动成功后，默认可访问：
+### 桌面版开发运行
 
-- Admin 控制台：`http://127.0.0.1:18743/admin`
-- 健康检查：`http://127.0.0.1:18743/health`
-- 模型列表：`http://127.0.0.1:18743/v1/models`
-
-### 方式一：开发模式启动
+用于开发、调试和体验完整桌面窗口能力。
 
 ```powershell
-cd D:\idea\localgateway
-D:\Go\bin\go.exe run .\cmd\localgateway
-```
-
-### 方式二：编译后启动
-
-```powershell
-cd D:\idea\localgateway
-D:\Go\bin\go.exe build -o lingshu.exe .\cmd\localgateway
-.\lingshu.exe
-```
-
-### 方式三：便携目录直接启动
-
-```powershell
-cd D:\idea\localgateway\build\portable\Lingshu
-.\lingshu.exe
-```
-
-默认情况下，程序启动成功后会自动打开：
-
-- `http://127.0.0.1:18743/admin`
-
-在 Windows 下会优先尝试使用 Chrome 打开管理页面；如果本机未安装 Chrome，则会回退到系统默认浏览器。
-
-同时，正式打包出来的 `.exe` 会以更接近桌面产品的方式运行：
-
-- 启动时不弹出控制台黑窗口
-- 常驻系统托盘
-- 可通过托盘菜单再次打开管理后台
-- 可通过托盘菜单主动退出程序
-
-### 方式四：Wails 桌面版启动
-
-```powershell
-cd D:\idea\localgateway
 wails dev
 ```
 
-或者直接构建桌面版：
+启动后会打开灵枢桌面窗口，同时启用本地网关服务和 Admin 控制台能力。
+
+### 浏览器版开发运行
+
+用于只启动本地网关服务，并通过浏览器访问 Admin 控制台。
 
 ```powershell
-cd D:\idea\localgateway
-.\build\desktop.ps1
+go run .\cmd\localgateway
 ```
 
-构建完成后输出：
+启动后，程序会按当前配置启动本地服务，并打开管理后台。
 
-- Windows：`build\bin\Lingshu.exe`
-- macOS：通过 GitHub Actions 构建 `Lingshu.app`
+### 编译浏览器版程序
 
----
+```powershell
+go build -o lingshu.exe .\cmd\localgateway
+.\lingshu.exe
+```
 
-## 双版本说明
-
-当前仓库同时维护两种运行模式：
-
-| 模式 | 入口 | 特点 |
-|------|------|------|
-| 浏览器版 | `cmd/localgateway/main.go` | 托盘常驻、自动开浏览器、适合便携分发 |
-| 桌面版 | 根目录 `main.go` + `app.go` | Wails 独立窗口、双端打包、支持桌面级交互 |
-
-两者共用：
-
-- 同一套 `internal/` Go 后端服务
-- 同一套 `web/admin/` React 前端代码
-- 同一份配置与数据库逻辑
+这种模式适合本地服务、浏览器后台和轻量便携分发。
 
 ---
 
-## 桌面版构建说明
+## 桌面应用打包
 
-### 本地 Windows
+灵枢桌面版基于 Wails 构建，可以打包为 Windows 应用和 macOS 应用。
+
+### Windows 应用
+
+推荐使用项目内置脚本：
 
 ```powershell
 .\build\desktop.ps1
 ```
 
-### GitHub Actions 双端构建
+也可以直接使用 Wails 命令：
 
-当推送 `v*` tag 时，会自动：
+```powershell
+wails build -s -platform windows/amd64 -o Lingshu.exe
+```
 
-- 在 Windows runner 构建 `Lingshu.exe`
-- 在 macOS runner 构建 `Lingshu.app`
+构建完成后，运行生成的 `Lingshu.exe` 即可启动桌面版。
+
+### macOS 应用
+
+在 macOS 环境下执行：
+
+```bash
+wails build -s -platform darwin/universal -o Lingshu
+```
+
+构建完成后会生成 `Lingshu.app`，可作为 macOS 桌面应用运行。
+
+### GitHub Actions 双端打包
+
+项目也支持通过 GitHub Actions 构建桌面应用。推送版本标签或手动触发工作流后，会分别生成：
+
+- Windows 桌面应用；
+- macOS 桌面应用。
 
 ---
 
-## 当前品牌与工程名说明
+## 便携版打包
 
-为了避免一次性改坏 Go module、import 路径和历史脚本，当前仓库采用 **“产品名 / 工程名分层”** 策略：
+用于生成下载后可直接使用的单目录版本。
 
-- **产品名**：灵枢（Lingshu）
-- **产物名**：`lingshu.exe`、`lingshu.zip`、`Lingshu.app`
-- **工程目录 / Go module / import 路径**：暂时仍保留 `localgateway`
+```powershell
+.\build\package.ps1
+```
 
-这意味着：
+便携目录包含主程序、配置文件、数据目录、日志目录和内嵌 Admin 前端资源。用户拿到目录后，直接运行主程序即可。
 
-- 用户看到的是灵枢品牌
-- 下载到的是 lingshu 产物
-- 代码内部仍可平稳沿用现有工程结构
+---
 
-后续如果需要，我可以继续帮你做第二阶段：
+## 前端开发
 
-1. 把 README 其余章节全部彻底替换为灵枢品牌语气
-2. 继续把 CI、脚本、发布目录名全量改到 `Lingshu`
-3. 最后评估是否要连 Go module 名也一起迁移
+如果只调试 Admin 前端：
+
+```powershell
+cd web\admin
+npm install
+npm run dev
+```
+
+构建 Admin 前端：
+
+```powershell
+cd web\admin
+npm run build
+```
+
+---
+
+## 常用检查
+
+**检查 Go 代码：**
+
+```powershell
+go test ./...
+```
+
+**检查前端构建：**
+
+```powershell
+cd web\admin
+npm run build
+```
+
+**检查桌面入口是否可编译：**
+
+```powershell
+go build -o lingshu-check.exe .
+```
+
+检查完成后可以删除临时产物。
+
+---
+
+## 两种运行模式
+
+当前灵枢有两种主要运行模式：
+
+| 模式 | 适合场景 | 用户体验 |
+| --- | --- | --- |
+| 桌面版 | 日常使用、产品化交付 | 独立窗口、托盘、桌面控制、自检 |
+| 浏览器版 | 本地服务、便携分发、调试 | 启动本地网关，通过浏览器访问 Admin |
+
+两种模式共用同一套后端服务、同一套 Admin 前端和同一份本地数据能力。
+
+---
+
+## 配置说明
+
+灵枢会按顺序查找配置：
+
+1. 环境变量指定的配置；
+2. 当前目录下的配置文件；
+3. 示例配置文件。
+
+普通用户优先通过 Admin 控制台修改配置。只有在无法进入后台或需要预置分发包时，才建议手动编辑配置文件。
+
+---
+
+## 项目结构
+
+```text
+cmd/                  浏览器版启动入口
+internal/             后端服务、鉴权、路由、日志、设置等核心逻辑
+web/admin/            Admin 前端
+build/                构建脚本、图标、便携包输出
+configs/              示例配置
+data/                 本地数据目录
+logs/                 日志目录
+main.go               Wails 桌面版入口
+app.go                桌面版绑定能力
+wails.json            Wails 配置
+```
+
+---
+
+## 品牌与工程名说明
+
+当前产品名是 **灵枢（Lingshu）**。
+
+当前仓库和 Go module 仍保留 `localgateway` 相关命名，用于维持历史代码、导入路径和脚本兼容。
+
+用户侧统一使用：
+
+- 产品名：灵枢；
+- 英文名：Lingshu；
+- 程序名：`lingshu.exe` 或 `Lingshu.exe`；
+- 便携包：Lingshu。
+
+---
+
+## 当前状态
+
+灵枢目前已经具备完整的本地 AI 网关产品闭环：
+
+1. 启动本地服务；
+2. 进入管理后台；
+3. 配置 Provider；
+4. 创建本地密钥；
+5. 配置模型路由；
+6. 发起模型调用；
+7. 查看日志；
+8. 分析费用和请求；
+9. 排查失败和备用切换；
+10. 通过桌面窗口或托盘进行日常管理；
+11. 构建为便携目录进行分发。
+
+下一步建议继续打磨首次引导、真实安装包、一键备份恢复、Provider 真实连通性检测和更完整的发布流程。

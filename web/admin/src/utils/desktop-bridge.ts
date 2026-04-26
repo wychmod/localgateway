@@ -159,8 +159,7 @@ export function sendDesktopNotice(title: string, message: string) { if (!isDeskt
 
 function subscribe<T>(eventName: string, handler: (payload: T) => void) {
   if (!isDesktopMode) return () => undefined;
-  let unsubscribe = () => undefined;
-  void EventsOn(eventName, (payload) => handler(payload as T)).then((fn) => { unsubscribe = fn; });
+  const unsubscribe = EventsOn(eventName, (payload) => handler(payload as T));
   return () => unsubscribe();
 }
 
