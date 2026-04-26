@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"mime"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/getlantern/systray"
@@ -18,15 +22,15 @@ import (
 )
 
 type spaProxy struct {
-	router http.Handler
-	static http.Handler
-	assets http.FileSystem
-	ready  bool
+	router     http.Handler
+	assets     http.FileSystem
+	diskAssets http.FileSystem
+	ready      bool
 }
 
 func newSPAProxy() *spaProxy {
 	adminAssets := adminembed.AdminFS()
-	return &spaProxy{static: http.FileServer(adminAssets), assets: adminAssets}
+	return &spaProxy{assets: adminAssets, diskAssets: http.Dir("build/embed/admin")}
 }
 
 func (p *spaProxy) setRouter(router http.Handler) {
@@ -49,15 +53,18 @@ func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	cleanPath := normalizeAssetPath(path)
 	if cleanPath == "" || cleanPath == "." {
-		r.URL.Path = "/index.html"
-		p.static.ServeHTTP(w, r)
+		p.serveEmbeddedFile(w, r, "index.html")
 		return
 	}
 
-	if file, err := p.assets.Open(cleanPath); err == nil {
+	if file, err := p.openAsset(cleanPath); err == nil {
+		info, statErr := file.Stat()
 		_ = file.Close()
-		r.URL.Path = "/" + cleanPath
-		p.static.ServeHTTP(w, r)
+		if statErr == nil && !info.IsDir() {
+			p.serveEmbeddedFile(w, r, cleanPath)
+			return
+		}
+		p.serveEmbeddedFile(w, r, "index.html")
 		return
 	}
 
@@ -68,14 +75,49 @@ func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.URL.Path = "/index.html"
-	p.static.ServeHTTP(w, r)
+	p.serveEmbeddedFile(w, r, "index.html")
 }
 
-func normalizeAssetPath(path string) string {
-	cleanPath := strings.TrimPrefix(path, "/")
+func (p *spaProxy) serveEmbeddedFile(w http.ResponseWriter, r *http.Request, assetPath string) {
+	file, err := p.openAsset(assetPath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer file.Close()
+
+	info, err := file.Stat()
+	if err != nil || info.IsDir() {
+		http.NotFound(w, r)
+		return
+	}
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, "failed to read asset", http.StatusInternalServerError)
+		return
+	}
+
+	contentType := mime.TypeByExtension(path.Ext(assetPath))
+	if contentType == "" {
+		contentType = http.DetectContentType(data)
+	}
+	w.Header().Set("Content-Type", contentType)
+	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
+}
+
+func (p *spaProxy) openAsset(assetPath string) (http.File, error) {
+	if file, err := p.assets.Open(assetPath); err == nil {
+		return file, nil
+	}
+	return p.diskAssets.Open(assetPath)
+}
+
+func normalizeAssetPath(requestPath string) string {
+	cleanPath := strings.TrimPrefix(requestPath, "/")
 	cleanPath = strings.TrimPrefix(cleanPath, "admin/")
-	return cleanPath
+	cleanPath = path.Clean("/" + cleanPath)
+	return strings.TrimPrefix(cleanPath, "/")
 }
 
 func isStaticAssetRequest(path string) bool {

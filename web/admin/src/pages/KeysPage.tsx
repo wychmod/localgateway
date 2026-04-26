@@ -19,11 +19,25 @@ const createEmptyKey = () => ({
   status: "active" as const
 });
 
+const unique = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
+
 export function KeysPage() {
-  const { keys, selectedKeyId, setSelectedKey, saveKey, rotateKey, revokeKey, extendKey, pushNotice } = useAdminStore();
+  const { keys, providers, selectedKeyId, setSelectedKey, saveKey, rotateKey, revokeKey, extendKey, pushNotice } = useAdminStore();
   const active = useMemo(() => keys.find((item) => item.id === selectedKeyId) ?? keys[0], [keys, selectedKeyId]);
   const [form, setForm] = useState(active ?? createEmptyKey());
   const [expiresAt, setExpiresAt] = useState("");
+  const providerOptions = useMemo(
+    () => providers.filter((provider) => provider.enabled !== false && provider.status !== "disabled").map((provider) => provider.name),
+    [providers]
+  );
+  const selectedProviders = form.allowedProviders.filter((provider) => providerOptions.includes(provider));
+  const modelOptions = useMemo(
+    () => unique(providers.filter((provider) => selectedProviders.includes(provider.name)).flatMap((provider) => provider.models)),
+    [providers, selectedProviders]
+  );
+  const selectedModels = form.allowedModels.filter((model) => modelOptions.includes(model));
+  const hasProviderOptions = providerOptions.length > 0;
+  const hasModelOptions = modelOptions.length > 0;
 
   useEffect(() => {
     if (active) {
@@ -95,19 +109,48 @@ export function KeysPage() {
           </label>
           <label className="span-2">
             <span>允许模型</span>
-            <input
-              value={form.allowedModels.join(", ")}
-              onChange={(e) => setForm({ ...form, allowedModels: e.target.value.split(",").map((item) => item.trim()).filter(Boolean) })}
-              placeholder="例如：gpt-4o, claude-sonnet-4"
-            />
+            <select
+              multiple
+              value={selectedModels}
+              disabled={!hasModelOptions}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  allowedModels: Array.from(e.currentTarget.selectedOptions, (option) => option.value)
+                })
+              }
+            >
+              {modelOptions.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select>
+            <small className="field-hint">{hasModelOptions ? "模型来自已选厂商的模型配置，可多选" : "请先选择带有模型配置的厂商"}</small>
           </label>
           <label className="span-2">
             <span>允许厂商</span>
-            <input
-              value={form.allowedProviders.join(", ")}
-              onChange={(e) => setForm({ ...form, allowedProviders: e.target.value.split(",").map((item) => item.trim()).filter(Boolean) })}
-              placeholder="例如：OpenAI 主线路, Claude 高级线路"
-            />
+            <select
+              multiple
+              value={selectedProviders}
+              disabled={!hasProviderOptions}
+              onChange={(e) => {
+                const nextProviders = Array.from(e.currentTarget.selectedOptions, (option) => option.value);
+                const nextModelOptions = unique(providers.filter((provider) => nextProviders.includes(provider.name)).flatMap((provider) => provider.models));
+                setForm({
+                  ...form,
+                  allowedProviders: nextProviders,
+                  allowedModels: form.allowedModels.filter((model) => nextModelOptions.includes(model))
+                });
+              }}
+            >
+              {providerOptions.map((provider) => (
+                <option key={provider} value={provider}>
+                  {provider}
+                </option>
+              ))}
+            </select>
+            <small className="field-hint">{hasProviderOptions ? "按住 Ctrl 可选择多个厂商" : "请先到厂商接入页面新增厂商"}</small>
           </label>
           <label>
             <span>月预算（美元）</span>
@@ -150,7 +193,33 @@ export function KeysPage() {
         </div>
 
         <div className="inline-actions sticky-actions">
-          <button type="button" className="primary-button" onClick={() => void saveKey({ ...form, expires_at: expiresAt ? `${expiresAt}T23:59:59Z` : null })}>保存变更</button>
+          <button
+            type="button"
+            className="primary-button"
+            disabled={!hasProviderOptions || selectedProviders.length === 0 || selectedModels.length === 0}
+            onClick={() => {
+              if (!hasProviderOptions) {
+                pushNotice({ tone: "warning", title: "请先新增厂商", message: "生成本地 API 前需要至少配置一个可用厂商。" });
+                return;
+              }
+              if (selectedProviders.length === 0) {
+                pushNotice({ tone: "warning", title: "请选择厂商", message: "本地 API 需要绑定至少一个允许厂商。" });
+                return;
+              }
+              if (selectedModels.length === 0) {
+                pushNotice({ tone: "warning", title: "请选择模型", message: "本地 API 需要绑定至少一个所选厂商支持的模型。" });
+                return;
+              }
+              void saveKey({
+                ...form,
+                allowedProviders: selectedProviders,
+                allowedModels: selectedModels,
+                expires_at: expiresAt ? `${expiresAt}T23:59:59Z` : null
+              });
+            }}
+          >
+            保存变更
+          </button>
           <button
             type="button"
             className="ghost-button"

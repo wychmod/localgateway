@@ -322,6 +322,13 @@ th, td { text-align: left; padding: 16px 12px; border-bottom: 1px solid rgba(255
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .form-grid label span, .form-grid .form-field > span { font-size: 0.85rem; margin-bottom: 2px; }
 input, select, textarea { padding: 10px 12px; font-size: 0.9rem; }
+select:disabled, button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+select[multiple] {
+  min-height: 118px;
+}
 .span-2 { grid-column: span 2; }
 .field-hint {
   color: var(--muted);
