@@ -1,7 +1,7 @@
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useEffect, useMemo, useState } from "react";
 import { distributionStatus, quickActions } from "../store/mock-data";
-import { providerStatusMap } from "../store/labels";
+import { labelFromMap, platformLabelMap } from "../store/labels";
 import { fetchDesktopStatus, isDesktopMode, type DesktopStatus } from "../utils/desktop-bridge";
 
 type ProviderTop = { name: string; success_rate: number; requests: number; cost: number };
@@ -63,7 +63,7 @@ export function DashboardPage() {
     if (!data) return [];
     return [
       { title: "总请求", value: `${data.overview.usage.total_requests} 次`, delta: `成功率 ${(data.overview.usage.success_rate * 100).toFixed(1)}%`, tone: "violet" },
-      { title: "累计费用", value: `${data.overview.usage.total_cost_usd.toFixed(2)} 美元`, delta: `输入 ${data.overview.usage.input_tokens} tokens`, tone: "emerald" },
+      { title: "累计费用", value: `${data.overview.usage.total_cost_usd.toFixed(2)} 美元`, delta: `输入 ${data.overview.usage.input_tokens} 个令牌`, tone: "emerald" },
       { title: "失败请求", value: `${data.log_stats.failures} 次`, delta: `备用切换 ${data.log_stats.fallbacks} 次`, tone: "sky" },
       { title: "可用厂商", value: `${data.overview.providers} 家`, delta: `平均延迟 ${data.log_stats.avg_latency_ms} 毫秒`, tone: "amber" }
     ];
@@ -75,7 +75,7 @@ export function DashboardPage() {
         <div>
           <span className="eyebrow">系统总览</span>
           <h2>网关配置 · 运行状态 · 分发进度</h2>
-          <p>首页现在开始展示失败趋势、备用切换趋势，以及热点模型与 Provider 成功率排行。</p>
+          <p>首页现在开始展示失败趋势、备用切换趋势，以及热点模型与厂商成功率排行。</p>
           <div className="inline-actions hero-actions">
             {quickActions.map((action) => (
               <button key={action} type="button" className="ghost-button compact">{action}</button>
@@ -84,7 +84,7 @@ export function DashboardPage() {
           {isDesktopMode ? (
             <div className="context-strip">
               <span className="metric-pill">桌面版本：{desktopStatus.version}</span>
-              <span className="metric-pill">当前平台：{desktopStatus.platform}</span>
+              <span className="metric-pill">当前平台：{labelFromMap(platformLabelMap, desktopStatus.platform)}</span>
               <span className="metric-pill">服务地址：{desktopStatus.serverAddr || "内嵌模式"}</span>
             </div>
           ) : null}
@@ -133,7 +133,7 @@ export function DashboardPage() {
       </section>
 
       <section className="luxury-panel providers-panel">
-        <div className="panel-heading"><div><span className="eyebrow">Provider 成功率排行</span><h3>按成功率查看当前主要 Provider</h3></div></div>
+        <div className="panel-heading"><div><span className="eyebrow">厂商成功率排行</span><h3>按成功率查看当前主要厂商</h3></div></div>
         <div className="provider-list">
           {(data?.provider_top ?? []).map((item) => (
             <article key={item.name} className="provider-row">
@@ -150,7 +150,7 @@ export function DashboardPage() {
           {(data?.hot_models ?? []).map((item) => (
             <article key={item.name} className="luxury-panel nested-panel detail-card">
               <strong>{item.name}</strong>
-              <p>请求 {item.requests} 次 · 费用 {item.cost.toFixed(2)} 美元 · Tokens {item.tokens}</p>
+              <p>请求 {item.requests} 次 · 费用 {item.cost.toFixed(2)} 美元 · 令牌 {item.tokens}</p>
             </article>
           ))}
         </div>

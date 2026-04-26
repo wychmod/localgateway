@@ -28,7 +28,7 @@ export function BuildChecksPage() {
         <SectionHeader
           eyebrow="构建检查"
           title="发布前检查清单"
-          description="在发布桌面版或便携版前，逐项核对 Provider、数据库、资源、端口和打包产物。"
+          description="在发布桌面版或便携版前，逐项核对厂商、数据库、资源、端口和打包产物。"
         />
 
         <div className="context-strip">

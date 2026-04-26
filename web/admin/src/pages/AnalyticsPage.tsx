@@ -61,7 +61,7 @@ export function AnalyticsPage() {
         <SectionHeader
           eyebrow="数据分析"
           title="费用 · 请求 · 令牌与性能分析"
-          description="这里已经把 usage 聚合、日志统计、模型拆分和 Key 拆分都接到真实数据。"
+          description="这里已经把用量聚合、日志统计、模型拆分和本地密钥拆分都接到真实数据。"
           actions={
             <>
               <button type="button" className={`ghost-button compact ${range === "7d" ? "active-chip" : ""}`} onClick={() => setRange("7d")}>近 7 天</button>
@@ -110,7 +110,7 @@ export function AnalyticsPage() {
       <article className="luxury-panel page-panel">
         <SectionHeader
           eyebrow="维度拆分"
-          title="Provider / Model / Key 拆分"
+          title="厂商 / 模型 / 本地密钥拆分"
           description="在同一页里切不同维度看成本、请求量和令牌分布。"
           actions={
             <>

@@ -33,6 +33,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import { useUIStore } from "../store/ui-store";
 import { useAdminStore } from "../store/admin-store";
+import { configValueLabelMap, labelFromMap, platformLabelMap, runtimeHealthMap } from "../store/labels";
 import {
   closeDesktopWindow,
   fetchConfigSummary,
@@ -209,6 +210,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const resolvedTheme = themeMeta[theme];
   const ThemeIcon = resolvedTheme.icon;
   const desktopLabel = desktopStatus.desktopMode ? `桌面版 ${desktopVersion}` : "浏览器版";
+  const platformLabel = labelFromMap(platformLabelMap, desktopStatus.platform || "web");
 
   const handleToggleMaximise = () => {
     const next = !desktopMaximised;
@@ -273,12 +275,12 @@ export function AppShell({ children }: PropsWithChildren) {
             <strong>窗口 / 托盘 / 自检 / 配置摘要</strong>
           </div>
           <div className="workspace-metrics">
-            <div><span>健康状态</span><strong>{runtimeSummary.health}</strong></div>
+            <div><span>健康状态</span><strong>{labelFromMap(runtimeHealthMap, runtimeSummary.health)}</strong></div>
             <div><span>厂商数量</span><strong>{runtimeSummary.providers}</strong></div>
             <div><span>密钥数量</span><strong>{runtimeSummary.keys}</strong></div>
             <div><span>路由规则</span><strong>{runtimeSummary.rules}</strong></div>
             <div><span>服务地址</span><strong>{configSummary.host}:{configSummary.port}</strong></div>
-            <div><span>分发模式</span><strong>{configSummary.bundleMode}</strong></div>
+            <div><span>分发模式</span><strong>{labelFromMap(configValueLabelMap, configSummary.bundleMode)}</strong></div>
           </div>
           {desktopStatus.desktopMode ? (
             <div className="inline-actions">
@@ -301,15 +303,6 @@ export function AppShell({ children }: PropsWithChildren) {
           })}
         </nav>
 
-        <div className="theme-switcher luxury-panel nested-panel">
-          <div><div className="theme-title">界面主题</div><div className="theme-subtitle">切换浅色、深色或跟随系统</div></div>
-          <div className="theme-buttons">
-            {(["light", "dark", "system"] as const).map((item) => {
-              const MetaIcon = themeMeta[item].icon;
-              return <button key={item} type="button" className={clsx("theme-button", theme === item && "active")} onClick={() => setTheme(item)}><MetaIcon size={16} />{themeMeta[item].label}</button>;
-            })}
-          </div>
-        </div>
       </aside>
 
       <div className="main-column">
@@ -322,8 +315,25 @@ export function AppShell({ children }: PropsWithChildren) {
             </div>
           </div>
           <div className="topbar-actions">
+            <div className="theme-switcher topbar-theme-switcher">
+              {(["light", "dark", "system"] as const).map((item) => {
+                const MetaIcon = themeMeta[item].icon;
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    title={`切换到${themeMeta[item].label}`}
+                    className={clsx("theme-button compact", theme === item && "active")}
+                    onClick={() => setTheme(item)}
+                  >
+                    <MetaIcon size={16} />
+                    {themeMeta[item].label}
+                  </button>
+                );
+              })}
+            </div>
             <div className="status-badge neutral-pill"><ThemeIcon size={14} />{resolvedTheme.label}</div>
-            <div className="status-badge neutral-pill"><Activity size={14} />{desktopStatus.platform || "web"}</div>
+            <div className="status-badge neutral-pill"><Activity size={14} />{platformLabel}</div>
             <button type="button" className="ghost-button compact" onClick={() => navigate("/logs")}><Bell size={16} />通知 {notices.length}</button>
             {desktopStatus.desktopMode ? <button type="button" className="ghost-button compact" onClick={() => sendDesktopNotice("灵枢", "桌面通知发送成功，通知链路可用。")}><Bell size={16} />原生通知</button> : null}
             <button type="button" className="ghost-button" onClick={() => navigate("/quick-setup")}>快速接入</button>

@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
-	"io/fs"
 	"net/http"
 	"strings"
 
@@ -15,24 +13,20 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
-)
 
-//go:embed all:web/admin/dist
-var assets embed.FS
+	adminembed "localgateway/build/embed"
+)
 
 type spaProxy struct {
 	router http.Handler
 	static http.Handler
-	assets fs.FS
+	assets http.FileSystem
 	ready  bool
 }
 
 func newSPAProxy() *spaProxy {
-	adminAssets, err := fs.Sub(assets, "web/admin/dist")
-	if err != nil {
-		adminAssets = assets
-	}
-	return &spaProxy{static: http.FileServer(http.FS(adminAssets)), assets: adminAssets}
+	adminAssets := adminembed.AdminFS()
+	return &spaProxy{static: http.FileServer(adminAssets), assets: adminAssets}
 }
 
 func (p *spaProxy) setRouter(router http.Handler) {
@@ -60,7 +54,8 @@ func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := p.assets.Open(cleanPath); err == nil {
+	if file, err := p.assets.Open(cleanPath); err == nil {
+		_ = file.Close()
 		r.URL.Path = "/" + cleanPath
 		p.static.ServeHTTP(w, r)
 		return
@@ -145,6 +140,7 @@ func runDesktopTray(app *DesktopApp) {
 					app.OpenAdminInBrowser()
 				case <-quitItem.ClickedCh:
 					app.CloseWindow()
+					systray.Quit()
 					return
 				}
 			}
@@ -204,11 +200,17 @@ func main() {
 			wailsruntime.EventsEmit(ctx, "desktop:restore-route", desktopApp.RestoreLastRoute())
 		},
 		OnBeforeClose: func(ctx context.Context) bool {
+			if desktopApp.IsQuitting() {
+				return false
+			}
 			desktopApp.HideToTray()
 			return true
 		},
-		OnShutdown: desktopApp.Shutdown,
-		Bind:       []interface{}{desktopApp},
+		OnShutdown: func(ctx context.Context) {
+			systray.Quit()
+			desktopApp.Shutdown(ctx)
+		},
+		Bind: []interface{}{desktopApp},
 	})
 
 	if err != nil {

@@ -1,6 +1,7 @@
 import { CircleCheckBig, Hash, Shield, TimerReset } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
+import { labelFromMap, platformLabelMap } from "../store/labels";
 import { fetchDesktopStatus, fetchDesktopVersion, isDesktopMode } from "../utils/desktop-bridge";
 
 type VersionBlock = {
@@ -29,7 +30,7 @@ export function VersionInfoPage() {
 
   const versionBlocks = useMemo<VersionBlock[]>(() => [
     { label: "版本号", value: isDesktopMode ? desktopVersion : "0.1.0-alpha", icon: Hash },
-    { label: "发布通道", value: isDesktopMode ? `桌面版 · ${platform}` : "便携预览版", icon: TimerReset },
+    { label: "发布通道", value: isDesktopMode ? `桌面版 · ${labelFromMap(platformLabelMap, platform)}` : "便携预览版", icon: TimerReset },
     { label: "安全状态", value: "仅限本地访问 · 登录功能待完善", icon: Shield },
     { label: "当前状态", value: isDesktopMode ? "桌面特性已启用" : "基础功能已就绪", icon: CircleCheckBig }
   ], [desktopVersion, platform]);

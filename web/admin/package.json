@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:wails": "vite build --base ./",
+    "build": "vite build && node scripts/sync-embed.mjs",
+    "build:wails": "vite build --base ./ && node scripts/sync-embed.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

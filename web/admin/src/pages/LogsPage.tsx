@@ -109,8 +109,8 @@ export function LogsPage() {
         </div>
 
         <div className="inline-actions" style={{ marginBottom: 16 }}>
-          <input value={providerFilter} onChange={(e) => setProviderFilter(e.target.value)} placeholder="筛选 Provider" />
-          <input value={apiFormatFilter} onChange={(e) => setApiFormatFilter(e.target.value)} placeholder="筛选 API 格式，如 openai / claude" />
+          <input value={providerFilter} onChange={(e) => setProviderFilter(e.target.value)} placeholder="筛选厂商" />
+          <input value={apiFormatFilter} onChange={(e) => setApiFormatFilter(e.target.value)} placeholder="筛选接口格式，如 OpenAI / Claude" />
           <button type="button" className={`ghost-button compact ${statusFilter === "failed" ? "active-chip" : ""}`} onClick={() => setStatusFilter((v) => v === "failed" ? "all" : "failed")}>只看失败</button>
         </div>
 
@@ -147,11 +147,11 @@ export function LogsPage() {
             <article className="luxury-panel nested-panel detail-card"><strong>详细说明</strong><p>{active.detail}</p></article>
             <article className="luxury-panel nested-panel detail-card">
               <strong>调用链路</strong>
-              <p>请求格式：{String(active.metadata?.apiFormat ?? "unknown")}</p>
-              <p>请求模型：{String(active.metadata?.requestedModel ?? "unknown")}</p>
-              <p>实际模型：{String(active.metadata?.actualModel ?? "unknown")}</p>
-              <p>主 Provider：{String(active.metadata?.provider ?? active.provider_id)}</p>
-              <p>Fallback 尝试：{active.fallback_tried?.length ? active.fallback_tried.join(" → ") : "无"}</p>
+              <p>请求格式：{String(active.metadata?.apiFormat ?? "未知")}</p>
+              <p>请求模型：{String(active.metadata?.requestedModel ?? "未知")}</p>
+              <p>实际模型：{String(active.metadata?.actualModel ?? "未知")}</p>
+              <p>主厂商：{String(active.metadata?.provider ?? active.provider_id)}</p>
+              <p>备用尝试：{active.fallback_tried?.length ? active.fallback_tried.join(" → ") : "无"}</p>
             </article>
           </div>
         ) : (

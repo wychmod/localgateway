@@ -154,7 +154,7 @@ export function toggleDesktopMaximise() { if (!isDesktopMode) return; void Toggl
 export function closeDesktopWindow() { if (!isDesktopMode) return; void CloseWindow(); }
 export function hideDesktopToTray() { if (!isDesktopMode) return; void HideToTray(); }
 export function showDesktopWindow() { if (!isDesktopMode) return; void ShowMainWindow(); }
-export function openDesktopAdminInBrowser() { if (!isDesktopMode) { window.open("/dashboard", "_blank"); return; } void OpenAdminInBrowser(); }
+export function openDesktopAdminInBrowser() { if (!isDesktopMode) { window.open("/admin/dashboard", "_blank"); return; } void OpenAdminInBrowser(); }
 export function sendDesktopNotice(title: string, message: string) { if (!isDesktopMode) return; void SendNativeNotice(title, message); }
 
 function subscribe<T>(eventName: string, handler: (payload: T) => void) {

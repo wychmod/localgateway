@@ -13,6 +13,13 @@ import {
   routingRuleRecordsLocalized,
   settingsRecordLocalized
 } from "./localized-data";
+import {
+  configValueLabelMap,
+  labelFromMap,
+  providerNameLabelMap,
+  providerTypeLabelMap,
+  valueFromLabel
+} from "./labels";
 
 type NoticeTone = "success" | "warning" | "info";
 
@@ -315,8 +322,8 @@ function mapProviderFromApi(record: ProviderApiRecord): ProviderRecord {
   const models = parseJSONList(record.models_json);
   return {
     id: record.id,
-    name: record.name,
-    type: record.type,
+    name: labelFromMap(providerNameLabelMap, record.name),
+    type: labelFromMap(providerTypeLabelMap, record.type),
     base_url: record.base_url,
     baseURL: record.base_url ?? "",
     organization_id: record.organization_id,
@@ -335,7 +342,7 @@ function mapProviderFromApi(record: ProviderApiRecord): ProviderRecord {
 function mapProviderToApi(record: ProviderRecord) {
   return {
     name: record.name,
-    type: record.type,
+    type: valueFromLabel(providerTypeLabelMap, record.type),
     base_url: record.baseURL,
     api_key: record.apiKey ?? "",
     organization_id: record.organization_id ?? "",
@@ -365,7 +372,7 @@ function mapKeyFromApi(record: KeyApiRecord, rawKey?: string): LocalKeyRecord {
     allowed_models_json: record.allowed_models_json,
     allowed_providers_json: record.allowed_providers_json,
     allowedModels: parseJSONList(record.allowed_models_json),
-    allowedProviders: parseJSONList(record.allowed_providers_json),
+    allowedProviders: parseJSONList(record.allowed_providers_json).map((provider) => labelFromMap(providerNameLabelMap, provider)),
     monthly_budget: record.monthly_budget,
     monthlyBudget: record.monthly_budget ?? 0,
     current_spend: record.current_spend,
@@ -385,7 +392,7 @@ function mapKeyToApi(record: LocalKeyRecord) {
   return {
     name: record.name,
     allowed_models: record.allowedModels,
-    allowed_providers: record.allowedProviders,
+    allowed_providers: record.allowedProviders.map((provider) => valueFromLabel(providerNameLabelMap, provider)),
     monthly_budget: record.monthlyBudget,
     token_budget: record.tokenBudget,
     enabled: record.status !== "revoked" && record.enabled !== false,
@@ -400,9 +407,9 @@ function mapRuleFromApi(record: RoutingRuleApiRecord): RoutingRuleRecord {
     modelPattern: record.model_pattern ?? "*",
     strategy: record.strategy ?? "priority",
     provider_chain: record.provider_chain,
-    providerChain: parseJSONList(record.provider_chain),
+    providerChain: parseJSONList(record.provider_chain).map((provider) => labelFromMap(providerNameLabelMap, provider)),
     fallback_chain: record.fallback_chain,
-    fallbackChain: parseJSONList(record.fallback_chain),
+    fallbackChain: parseJSONList(record.fallback_chain).map((provider) => labelFromMap(providerNameLabelMap, provider)),
     enabled: record.enabled ?? true
   };
 }
@@ -411,8 +418,8 @@ function mapRuleToApi(record: RoutingRuleRecord) {
   return {
     model_pattern: record.modelPattern,
     strategy: record.strategy,
-    provider_chain: record.providerChain,
-    fallback_chain: record.fallbackChain,
+    provider_chain: record.providerChain.map((provider) => valueFromLabel(providerNameLabelMap, provider)),
+    fallback_chain: record.fallbackChain.map((provider) => valueFromLabel(providerNameLabelMap, provider)),
     enabled: record.enabled
   };
 }
@@ -427,15 +434,15 @@ function mapSettingsFromApi(record: SettingsApiRecord): SettingsRecord {
     adminUsername: record.admin_username ?? "admin",
     theme: record.theme ?? "system",
     update_channel: record.update_channel,
-    updateChannel: record.update_channel ?? "stable",
+    updateChannel: labelFromMap(configValueLabelMap, record.update_channel ?? "stable"),
     backup_interval: record.backup_interval,
     backupInterval: record.backup_interval ?? "24h",
     log_level: record.log_level,
-    logLevel: record.log_level ?? "standard",
+    logLevel: labelFromMap(configValueLabelMap, record.log_level ?? "standard"),
     retention_days: record.retention_days,
     retentionDays: record.retention_days ?? 30,
     bundle_mode: record.bundle_mode,
-    bundleMode: record.bundle_mode ?? "single-binary"
+    bundleMode: labelFromMap(configValueLabelMap, record.bundle_mode ?? "single-binary")
   };
 }
 
@@ -446,11 +453,11 @@ function mapSettingsToApi(record: SettingsRecord) {
     admin_path: record.adminPath,
     admin_username: record.adminUsername,
     theme: record.theme,
-    update_channel: record.updateChannel,
+    update_channel: valueFromLabel(configValueLabelMap, record.updateChannel),
     backup_interval: record.backupInterval,
-    log_level: record.logLevel,
+    log_level: valueFromLabel(configValueLabelMap, record.logLevel),
     retention_days: record.retentionDays,
-    bundle_mode: record.bundleMode
+    bundle_mode: valueFromLabel(configValueLabelMap, record.bundleMode)
   };
 }
 

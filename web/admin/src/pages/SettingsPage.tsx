@@ -39,7 +39,11 @@ export function SettingsPage() {
           </label>
           <label>
             <span>界面主题</span>
-            <input value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value as typeof form.theme })} />
+            <select value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value as typeof form.theme })}>
+              <option value="system">跟随系统</option>
+              <option value="light">浅色</option>
+              <option value="dark">深色</option>
+            </select>
           </label>
           <label>
             <span>更新通道</span>
