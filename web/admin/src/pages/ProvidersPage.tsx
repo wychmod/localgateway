@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, RefreshCcw, Trash2, Wifi } from "lucide-react";
-import { DrawerCard } from "../components/DrawerCard";
-import { SectionHeader } from "../components/SectionHeader";
+import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, RefreshCcw, Trash2, Wifi, X } from "lucide-react";
 import { useAdminStore } from "../store/admin-store";
 import { providerStatusMap } from "../store/labels";
 
@@ -36,12 +34,15 @@ export function ProvidersPage() {
     discoverProviderModels,
     pushNotice
   } = useAdminStore();
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [form, setForm] = useState<ReturnType<typeof emptyProvider>>(emptyProvider(providers.length));
+  const [showApiKey, setShowApiKey] = useState(false);
+
   const active = useMemo(
     () => providers.find((item) => item.id === selectedProviderId),
     [providers, selectedProviderId]
   );
-  const [form, setForm] = useState(active ?? emptyProvider(providers.length));
-  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (active) {
@@ -49,8 +50,34 @@ export function ProvidersPage() {
     }
   }, [active]);
 
-  const modelsText = form.models.join(", ");
-  const hasUnsavedChanges = JSON.stringify(form) !== JSON.stringify(active ?? {});
+  const openDrawer = (provider?: typeof form) => {
+    if (provider) {
+      setForm(provider);
+      setSelectedProvider(provider.id);
+    } else {
+      const next = emptyProvider(providers.length);
+      setForm(next);
+      setSelectedProvider(next.id);
+    }
+    setDrawerOpen(true);
+    setShowApiKey(false);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setShowApiKey(false);
+  };
+
+  const handleSave = async () => {
+    await saveProvider(form);
+    closeDrawer();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("确定删除此厂商？")) return;
+    await deleteProvider(id);
+    if (form.id === id) closeDrawer();
+  };
 
   const moveProvider = (id: string, direction: -1 | 1) => {
     const currentIndex = providers.findIndex((provider) => provider.id === id);
@@ -61,207 +88,289 @@ export function ProvidersPage() {
     void reorderProviders(next.map((provider) => provider.id));
   };
 
+  const modelsText = form.models.join(", ");
+  const hasUnsavedChanges = JSON.stringify(form) !== JSON.stringify(active ?? {});
+
   return (
-    <section className="page-grid split-layout">
-      <article className="luxury-panel page-panel">
-        <SectionHeader
-          eyebrow="厂商接入"
-          title="厂商管理"
-          actions={
-            <>
+    <div className="flex-col gap-4">
+      {/* Header */}
+      <div className="section-header">
+        <div className="section-header-main">
+          <span className="eyebrow">模型接入</span>
+          <h2 className="section-title">厂商管理</h2>
+        </div>
+        <div className="section-actions">
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => openDrawer()}>
+            <Plus size={14} /> 新建厂商
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="flex items-center gap-2">
+        <span className="pill pill-neutral">总数 {providers.length}</span>
+        <span className="pill pill-success">在线 {providers.filter((p) => p.status === "healthy").length}</span>
+        <span className="pill pill-warning">异常 {providers.filter((p) => p.status === "warning").length}</span>
+      </div>
+
+      {/* List */}
+      <div className="flex-col gap-2 list-animate">
+        {providers.map((provider, index) => (
+          <div
+            key={provider.id}
+            className="list-row"
+            style={{ "--index": index } as React.CSSProperties}
+          >
+            <div className="list-row-main">
+              <div className="flex items-center gap-2">
+                <div
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background:
+                      provider.status === "healthy"
+                        ? "var(--accent)"
+                        : provider.status === "warning"
+                        ? "var(--warning)"
+                        : "var(--text-tertiary)",
+                    flexShrink: 0
+                  }}
+                />
+                <span className="list-row-title">{provider.name}</span>
+                <span
+                  className="pill"
+                  style={{
+                    background:
+                      provider.status === "healthy"
+                        ? "var(--accent-dim)"
+                        : provider.status === "warning"
+                        ? "var(--warning-dim)"
+                        : "var(--bg-elevated)",
+                    color:
+                      provider.status === "healthy"
+                        ? "var(--accent)"
+                        : provider.status === "warning"
+                        ? "var(--warning)"
+                        : "var(--text-tertiary)"
+                  }}
+                >
+                  {providerStatusMap[provider.status] ?? provider.status}
+                </span>
+              </div>
+              <span className="list-row-meta">
+                {provider.type} · {provider.baseURL}
+              </span>
+              <span className="list-row-sub">
+                {provider.models.length} 个模型 · {provider.rpm} RPM · {provider.tpm.toLocaleString()} TPM · 优先级 #{provider.priority}
+              </span>
+            </div>
+            <div className="list-row-actions">
               <button
                 type="button"
-                className="ghost-button compact"
-                onClick={() => {
-                  const next = emptyProvider(providers.length);
-                  setSelectedProvider(next.id);
-                  setForm(next);
-                  pushNotice({ tone: "info", title: "新建厂商", message: "填写接入地址后保存。" });
-                }}
+                className="btn btn-ghost btn-sm"
+                disabled={index === 0}
+                onClick={(e) => { e.stopPropagation(); moveProvider(provider.id, -1); }}
+                title="上移"
               >
-                <Plus size={16} /> 新建
+                <ArrowUp size={14} />
               </button>
               <button
                 type="button"
-                className="ghost-button compact"
+                className="btn btn-ghost btn-sm"
+                disabled={index === providers.length - 1}
+                onClick={(e) => { e.stopPropagation(); moveProvider(provider.id, 1); }}
+                title="下移"
+              >
+                <ArrowDown size={14} />
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={(e) => { e.stopPropagation(); openDrawer(provider); }}
+              >
+                编辑
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                onClick={(e) => { e.stopPropagation(); void handleDelete(provider.id); }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {providers.length === 0 && (
+          <div className="empty-state">
+            <span style={{ fontSize: "1.25rem", color: "var(--text-tertiary)" }}>○</span>
+            <span className="empty-state-title">暂无厂商</span>
+            <span className="empty-state-desc">点击右上角"新建厂商"添加第一个模型接入点</span>
+          </div>
+        )}
+      </div>
+
+      {/* Drawer */}
+      {drawerOpen && (
+        <>
+          <div className="drawer-overlay" onClick={closeDrawer} />
+          <aside className="drawer">
+            <div className="drawer-header">
+              <div>
+                <h3 className="section-title">{form.name}</h3>
+                <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: 2 }}>
+                  {hasUnsavedChanges ? "有未保存的变更" : "厂商详情与配置"}
+                </p>
+              </div>
+              <button type="button" className="btn btn-ghost btn-icon" onClick={closeDrawer}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="drawer-body">
+              <div className="form-grid">
+                <div className="form-field span-2">
+                  <label className="form-label">厂商名称</label>
+                  <input
+                    className="form-control"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="例如：OpenAI 主线路"
+                  />
+                </div>
+
+                <div className="form-field span-2">
+                  <label className="form-label">接入类型</label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-2)" }}>
+                    {providerTypeOptions.map((option) => (
+                      <label
+                        key={option.value}
+                        className="panel panel-compact"
+                        style={{
+                          cursor: "pointer",
+                          borderColor: form.type === option.value ? "var(--accent)" : undefined,
+                          background: form.type === option.value ? "var(--accent-dim)" : undefined
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="provider-type"
+                          value={option.value}
+                          checked={form.type === option.value}
+                          onChange={() => setForm({ ...form, type: option.value })}
+                          style={{ position: "absolute", opacity: 0 }}
+                        />
+                        <strong style={{ fontSize: "0.85rem" }}>{option.label}</strong>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{option.hint}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-field span-2">
+                  <label className="form-label">接口地址</label>
+                  <input
+                    className="form-control"
+                    type="url"
+                    value={form.baseURL}
+                    onChange={(e) => setForm({ ...form, baseURL: e.target.value })}
+                    placeholder="https://api.example.com"
+                    spellCheck={false}
+                  />
+                  <span className="form-hint">填写基础地址即可，系统会自动追加 /v1/chat/completions 或 /v1/messages</span>
+                </div>
+
+                <div className="form-field span-2">
+                  <label className="form-label">API Key / Token</label>
+                  <div className="secret-input">
+                    <input
+                      className="form-control"
+                      type={showApiKey ? "text" : "password"}
+                      value={form.apiKey ?? ""}
+                      onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+                      placeholder="sk-..."
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-icon"
+                      onClick={() => setShowApiKey((v) => !v)}
+                    >
+                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label className="form-label">每分钟请求数 (RPM)</label>
+                  <input
+                    className="form-control"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={form.rpm}
+                    onChange={(e) => setForm({ ...form, rpm: Number(e.target.value) })}
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label className="form-label">每分钟令牌数 (TPM)</label>
+                  <input
+                    className="form-control"
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={form.tpm}
+                    onChange={(e) => setForm({ ...form, tpm: Number(e.target.value) })}
+                  />
+                </div>
+
+                <div className="form-field span-2">
+                  <label className="form-label">支持模型</label>
+                  <textarea
+                    className="form-control"
+                    value={modelsText}
+                    onChange={(e) => setForm({ ...form, models: e.target.value.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) })}
+                    placeholder="例如：gpt-4o, gpt-4o-mini, o3-mini"
+                    rows={3}
+                  />
+                  <span className="form-hint">支持逗号或换行分隔</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="pill pill-neutral">状态 {providerStatusMap[form.status] ?? form.status}</span>
+                <span className="pill pill-neutral">模型 {form.models.length}</span>
+                <span className="pill pill-neutral">优先级 {form.priority}</span>
+              </div>
+            </div>
+
+            <div className="drawer-footer">
+              <button type="button" className="btn btn-primary" onClick={() => void handleSave()}>
+                保存配置
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => void testProvider(form.id)}>
+                <Wifi size={14} /> 测试连接
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={async () => {
-                  if (!form.id) return;
                   const models = await discoverProviderModels(form.id);
                   if (models.length) setForm({ ...form, models });
                 }}
               >
-                <RefreshCcw size={16} /> 发现模型
+                <RefreshCcw size={14} /> 发现模型
               </button>
-            </>
-          }
-        />
-
-        <div className="context-strip provider-context-strip">
-          <div className="metric-pill">厂商总数 {providers.length}</div>
-          <div className="metric-pill">可用厂商 {providers.filter((item) => item.status === "healthy").length}</div>
-          <div className="metric-pill">优先级 #{form.priority}</div>
-        </div>
-
-        <div className="stack-list">
-          {providers.map((provider, index) => (
-            <article key={provider.id} className={`select-card ${provider.id === active?.id ? "active" : ""}`}>
-              <button
-                type="button"
-                className="select-card-main"
-                onClick={() => {
-                  setSelectedProvider(provider.id);
-                }}
-              >
-                <div>
-                  <strong>{provider.name}</strong>
-                  <span>{provider.type} · {provider.baseURL}</span>
-                  <small>{provider.models.length} 个模型 · 每分钟 {provider.rpm} 次请求 · 每分钟 {provider.tpm.toLocaleString()} 个令牌</small>
-                </div>
-                <span className={`status-pill ${provider.status}`}>{providerStatusMap[provider.status] ?? provider.status}</span>
-              </button>
-              <div className="card-row-actions">
-                <button type="button" className="ghost-button compact" disabled={index === 0} onClick={() => moveProvider(provider.id, -1)}><ArrowUp size={14} />上移</button>
-                <button type="button" className="ghost-button compact" disabled={index === providers.length - 1} onClick={() => moveProvider(provider.id, 1)}><ArrowDown size={14} />下移</button>
-                <button type="button" className="ghost-button compact danger" onClick={() => void deleteProvider(provider.id)}><Trash2 size={14} />删除</button>
-              </div>
-            </article>
-          ))}
-        </div>
-      </article>
-
-      <DrawerCard title={form.name} subtitle="厂商详情与操作面板">
-        <div className="form-grid">
-          <label>
-            <span>厂商名称</span>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="例如：OpenAI 主线路" />
-          </label>
-          <div className="form-field span-2">
-            <span>接入类型</span>
-            <div className="radio-card-grid" role="radiogroup" aria-label="接入类型">
-              {providerTypeOptions.map((option) => (
-                <label key={option.value} className={`radio-card ${form.type === option.value ? "active" : ""}`}>
-                  <input
-                    type="radio"
-                    name="provider-type"
-                    value={option.value}
-                    checked={form.type === option.value}
-                    onChange={() => setForm({ ...form, type: option.value })}
-                  />
-                  <strong>{option.label}</strong>
-                  <small>{option.hint}</small>
-                </label>
-              ))}
-            </div>
-          </div>
-          <label className="span-2">
-            <span>接口地址</span>
-            <input
-              type="url"
-              value={form.baseURL}
-              onChange={(e) => setForm({ ...form, baseURL: e.target.value })}
-              placeholder="https://api.example.com"
-              spellCheck={false}
-            />
-            <small className="field-hint">填写基础地址即可，系统会自动追加 /v1/chat/completions 或 /v1/messages。</small>
-          </label>
-          <label className="span-2">
-            <span>API Key / Token</span>
-            <div className="secret-input">
-              <input
-                type={showApiKey ? "text" : "password"}
-                value={form.apiKey ?? ""}
-                onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
-                placeholder="sk-..."
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                className="ghost-button compact icon-button"
-                onClick={() => setShowApiKey((value) => !value)}
-                aria-label={showApiKey ? "隐藏 Token" : "显示 Token"}
-              >
-                {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              <button type="button" className="btn btn-danger" onClick={() => void handleDelete(form.id)}>
+                <Trash2 size={14} /> 删除
               </button>
             </div>
-          </label>
-          <label>
-            <span>每分钟请求数</span>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              inputMode="numeric"
-              value={form.rpm}
-              onChange={(e) => setForm({ ...form, rpm: Number(e.target.value) })}
-            />
-          </label>
-          <label>
-            <span>每分钟令牌数</span>
-            <input
-              type="number"
-              min={0}
-              step={1000}
-              inputMode="numeric"
-              value={form.tpm}
-              onChange={(e) => setForm({ ...form, tpm: Number(e.target.value) })}
-            />
-          </label>
-          <label className="span-2">
-            <span>支持模型</span>
-            <textarea
-              value={modelsText}
-              onChange={(e) => setForm({ ...form, models: e.target.value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean) })}
-              placeholder="例如：gpt-4o, gpt-4o-mini, o3-mini"
-              rows={4}
-            />
-            <small className="field-hint">支持逗号或换行分隔，保存前会自动去掉空项。</small>
-          </label>
-        </div>
-
-        <div className="metric-bar-grid detail-metric-grid">
-          <div className="metric-pill">当前状态 {providerStatusMap[form.status] ?? form.status}</div>
-          <div className="metric-pill">模型数量 {form.models.length}</div>
-          <div className="metric-pill">优先级 {form.priority}</div>
-          <div className={`metric-pill ${hasUnsavedChanges ? "warning-pill" : "success-pill"}`}>
-            {hasUnsavedChanges ? "有未保存变更" : "已与列表同步"}
-          </div>
-        </div>
-
-        <div className="inline-actions sticky-actions">
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => void saveProvider(form)}
-          >
-            保存配置
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => void testProvider(form.id)}
-          >
-            <Wifi size={16} /> 测试连接
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={async () => {
-              const models = await discoverProviderModels(form.id);
-              if (models.length) setForm({ ...form, models });
-            }}
-          >
-            自动发现模型
-          </button>
-          <button
-            type="button"
-            className="ghost-button danger"
-            onClick={() => void deleteProvider(form.id)}
-          >
-            <Trash2 size={16} /> 删除厂商
-          </button>
-        </div>
-      </DrawerCard>
-    </section>
+          </aside>
+        </>
+      )}
+    </div>
   );
 }

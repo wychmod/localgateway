@@ -1,11 +1,7 @@
-import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useEffect, useMemo, useState } from "react";
-
-import { labelFromMap, platformLabelMap } from "../store/labels";
-import { fetchDesktopStatus, isDesktopMode, type DesktopStatus } from "../utils/desktop-bridge";
-
-type ProviderTop = { name: string; success_rate: number; requests: number; cost: number };
-type HotModel = { name: string; requests: number; cost: number; tokens: number };
+import { AlertTriangle, CheckCircle2, Loader2, Zap } from "lucide-react";
+import { isDesktopMode } from "../utils/desktop-bridge";
 
 type DashboardPayload = {
   overview: {
@@ -22,146 +18,289 @@ type DashboardPayload = {
   };
   trend: Array<{ day: string; cost: number; requests: number; tokens: number }>;
   failure_trend: Array<{ day: string; failures: number; fallbacks: number }>;
-  provider_breakdown: Array<{ name: string; cost: number; requests: number; tokens: number }>;
   provider_health: Array<{ status: string; latency_ms: number; message: string }>;
-  recent_logs: Array<{ id: string; path: string; provider_id: string; latency_ms: number; status_label: string }>;
-  hot_models: HotModel[];
-  provider_top: ProviderTop[];
+  recent_logs: Array<{ id: string; path: string; provider_id: string; latency_ms: number; status_label: string; status_code: number }>;
   log_stats: { total: number; failures: number; fallbacks: number; avg_latency_ms: number };
-  alerts: Array<{ level: string; title: string; description: string }>;
-};
-
-const fallbackStatus: DesktopStatus = {
-  version: "browser",
-  platform: "web",
-  serverAddr: "",
-  adminUrl: "",
-  windowTitle: "灵枢",
-  desktopMode: false,
-  notifications: false,
-  customChrome: false,
-  trayEnabled: false,
-  hideToTrayEnabled: false,
-  stateRestore: false,
-  windowState: { width: 1360, height: 860, x: 120, y: 80, maximised: false, lastRoute: "/dashboard", hiddenToTray: false },
-  runtime: { providers: 0, keys: 0, rules: 0, health: "browser" },
-  configSummary: { host: "127.0.0.1", port: 0, adminPath: "/admin", theme: "system", bundleMode: "browser", updateChannel: "stable" }
 };
 
 export function DashboardPage() {
-  const [desktopStatus, setDesktopStatus] = useState<DesktopStatus>(fallbackStatus);
   const [data, setData] = useState<DashboardPayload | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchDesktopStatus().then(setDesktopStatus);
-    void fetch("/admin/api/dashboard")
-      .then((res) => res.json())
-      .then((payload) => setData(payload.data ?? null));
+    setLoading(true);
+    setError(null);
+    fetch("/admin/api/dashboard")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        setData(payload.data ?? null);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "加载失败"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const statCards = useMemo(() => {
+  const kpis = useMemo(() => {
     if (!data) return [];
     return [
-      { title: "总请求", value: `${data.overview.usage.total_requests} 次`, delta: `成功率 ${(data.overview.usage.success_rate * 100).toFixed(1)}%`, tone: "violet" },
-      { title: "累计费用", value: `${data.overview.usage.total_cost_usd.toFixed(2)} 美元`, delta: `输入 ${data.overview.usage.input_tokens} 个令牌`, tone: "emerald" },
-      { title: "失败请求", value: `${data.log_stats.failures} 次`, delta: `备用切换 ${data.log_stats.fallbacks} 次`, tone: "sky" },
-      { title: "可用厂商", value: `${data.overview.providers} 家`, delta: `平均延迟 ${data.log_stats.avg_latency_ms} 毫秒`, tone: "amber" }
+      {
+        label: "总请求",
+        value: data.overview.usage.total_requests.toLocaleString(),
+        delta: `成功率 ${(data.overview.usage.success_rate * 100).toFixed(1)}%`,
+        healthy: data.overview.usage.success_rate >= 0.95
+      },
+      {
+        label: "累计费用（7日）",
+        value: `$${data.overview.usage.total_cost_usd.toFixed(2)}`,
+        delta: `${(data.overview.usage.input_tokens + data.overview.usage.output_tokens).toLocaleString()} tokens`,
+        healthy: true
+      },
+      {
+        label: "失败请求",
+        value: String(data.log_stats.failures),
+        delta: `备用切换 ${data.log_stats.fallbacks} 次`,
+        healthy: data.log_stats.failures === 0
+      },
+      {
+        label: "平均延迟",
+        value: `${data.log_stats.avg_latency_ms}ms`,
+        delta: `${data.overview.providers} 家厂商在线`,
+        healthy: data.log_stats.avg_latency_ms < 1000
+      }
     ];
   }, [data]);
 
-  return (
-    <div className="page-grid dashboard-grid enhanced-dashboard">
-      <section className="hero-panel luxury-panel dashboard-hero">
-        <div>
-          <span className="eyebrow">系统总览</span>
-          <h2>灵枢总台</h2>
-          {isDesktopMode ? (
-            <div className="context-strip">
-              <span className="metric-pill">{desktopStatus.version}</span>
-              <span className="metric-pill">{labelFromMap(platformLabelMap, desktopStatus.platform)}</span>
-              <span className="metric-pill">{desktopStatus.serverAddr || "内嵌模式"}</span>
+  const alerts = useMemo(() => {
+    const items: Array<{ level: "success" | "warning" | "danger"; title: string; message: string }> = [];
+    if (!data) return items;
+
+    if (data.log_stats.failures > 0) {
+      items.push({
+        level: "warning",
+        title: "近期存在失败请求",
+        message: `过去 7 天内共有 ${data.log_stats.failures} 次请求失败，${data.log_stats.fallbacks} 次触发备用切换。`
+      });
+    }
+
+    const unhealthyProviders = data.provider_health?.filter((p) => p.status !== "healthy");
+    if (unhealthyProviders?.length) {
+      items.push({
+        level: "danger",
+        title: `${unhealthyProviders.length} 家厂商异常`,
+        message: unhealthyProviders.map((p) => p.message).join("；")
+      });
+    }
+
+    const recentFailures = data.recent_logs?.filter((log) => log.status_code >= 400);
+    if (recentFailures?.length > 0) {
+      items.push({
+        level: "warning",
+        title: "最近请求存在异常",
+        message: `最近 ${recentFailures.length} 条请求返回非 2xx 状态码。`
+      });
+    }
+
+    if (items.length === 0) {
+      items.push({
+        level: "success",
+        title: "系统运行平稳",
+        message: "过去 7 天内未发现需要关注的异常。"
+      });
+    }
+
+    return items;
+  }, [data]);
+
+  const trafficDots = useMemo(() => {
+    if (!data?.recent_logs?.length) return [];
+    return data.recent_logs.slice(0, 8).map((log) => ({
+      id: log.id,
+      color: log.status_code >= 500 ? "var(--danger)" : log.status_code >= 400 ? "var(--warning)" : "var(--accent)",
+      path: log.path,
+      provider: log.provider_id,
+      latency: log.latency_ms
+    }));
+  }, [data]);
+
+  if (loading) {
+    return (
+      <div className="flex-col gap-5">
+        <section className="kpi-grid">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="kpi-card" style={{ minHeight: 100 }}>
+              <div className="skeleton skeleton-text" style={{ width: "40%" }} />
+              <div className="skeleton skeleton-title" style={{ width: "70%", marginTop: 8 }} />
+              <div className="skeleton skeleton-text" style={{ width: "50%", marginTop: 8 }} />
             </div>
-          ) : null}
+          ))}
+        </section>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "var(--space-4)" }}>
+          <div className="panel" style={{ minHeight: 340 }}>
+            <div className="skeleton skeleton-title" style={{ width: "30%" }} />
+            <div className="skeleton" style={{ width: "100%", height: 260, marginTop: 16 }} />
+          </div>
+          <div className="panel" style={{ minHeight: 340 }}>
+            <div className="skeleton skeleton-title" style={{ width: "40%" }} />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="panel panel-compact" style={{ marginTop: 12 }}>
+                <div className="skeleton skeleton-text" style={{ width: "60%" }} />
+                <div className="skeleton skeleton-text" style={{ width: "80%", marginTop: 8 }} />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="hero-orb"><div className="orb-core" /></div>
-      </section>
+      </div>
+    );
+  }
 
-      <section className="stats-grid">
-        {statCards.length ? statCards.map((card) => (
-          <article key={card.title} className={`luxury-panel stat-card tone-${card.tone}`}>
-            <span>{card.title}</span>
-            <strong>{card.value}</strong>
-            <em>{card.delta}</em>
+  if (error) {
+    return (
+      <div className="empty-state" style={{ minHeight: 400 }}>
+        <Zap size={32} style={{ color: "var(--danger)", opacity: 0.6 }} />
+        <span className="empty-state-title" style={{ color: "var(--danger)" }}>数据加载失败</span>
+        <span className="empty-state-desc">{error}，请检查后端服务是否正常运行。</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-col gap-5">
+      {/* KPI Row */}
+      <section className="kpi-grid">
+        {kpis.length > 0 ? (
+          kpis.map((kpi) => (
+            <article key={kpi.label} className="kpi-card">
+              <span className="kpi-label">{kpi.label}</span>
+              <span className="kpi-value" style={{ color: kpi.healthy ? "var(--text-primary)" : "var(--warning)" }}>
+                {kpi.value}
+              </span>
+              <span className="kpi-delta">{kpi.delta}</span>
+            </article>
+          ))
+        ) : (
+          <article className="kpi-card" style={{ gridColumn: "span 4" }}>
+            <span className="kpi-label">系统初始化中</span>
+            <span className="kpi-value">--</span>
+            <span className="kpi-delta">发起真实请求后将显示统计数据</span>
           </article>
-        )) : <article className="luxury-panel stat-card"><strong>暂无真实统计</strong><em>先发起一些真实请求，这里就会长出数据。</em></article>}
+        )}
       </section>
 
-      <section className="luxury-panel chart-panel">
-        <div className="panel-heading"><div><span className="eyebrow">费用趋势</span><h3>近 7 日</h3></div></div>
-        <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data?.trend ?? []}>
-              <defs><linearGradient id="costFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#7c5cff" stopOpacity={0.65} /><stop offset="100%" stopColor="#7c5cff" stopOpacity={0} /></linearGradient></defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-              <XAxis dataKey="day" stroke="rgba(255,255,255,0.4)" />
-              <Tooltip contentStyle={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(15,18,32,0.92)" }} />
-              <Area type="monotone" dataKey="cost" stroke="#a78bfa" fill="url(#costFill)" strokeWidth={3} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Charts + Alerts */}
+      <section style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "var(--space-4)" }}>
+        {/* Cost Trend */}
+        <article className="panel">
+          <div className="section-header" style={{ marginBottom: "var(--space-4)" }}>
+            <div className="section-header-main">
+              <span className="eyebrow">用量监控</span>
+              <h2 className="section-title">费用趋势</h2>
+            </div>
+          </div>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data?.trend ?? []}>
+                <defs>
+                  <linearGradient id="costFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="var(--border-subtle)" vertical={false} />
+                <XAxis dataKey="day" stroke="var(--text-tertiary)" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--bg-surface)",
+                    border: "1px solid var(--border-default)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "0.82rem",
+                    boxShadow: "var(--shadow-md)"
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cost"
+                  stroke="var(--accent)"
+                  fill="url(#costFill)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </article>
+
+        {/* Alerts */}
+        <article className="panel" style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          <div>
+            <span className="eyebrow">异常监控</span>
+            <h2 className="section-title" style={{ marginTop: 4 }}>最近 Alert</h2>
+          </div>
+          <div className="flex-col gap-3" style={{ flex: 1, overflow: "auto" }}>
+            {alerts.map((alert, i) => (
+              <div
+                key={i}
+                className="panel panel-compact"
+                style={{
+                  borderLeft: `3px solid var(--${alert.level === "success" ? "accent" : alert.level === "warning" ? "warning" : "danger"})`,
+                  padding: "var(--space-3)",
+                  animationDelay: `${i * 60}ms`
+                }}
+              >
+                <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
+                  {alert.level === "success" ? (
+                    <CheckCircle2 size={14} style={{ color: "var(--accent)" }} />
+                  ) : alert.level === "warning" ? (
+                    <AlertTriangle size={14} style={{ color: "var(--warning)" }} />
+                  ) : (
+                    <Zap size={14} style={{ color: "var(--danger)" }} />
+                  )}
+                  <strong style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>{alert.title}</strong>
+                </div>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>{alert.message}</p>
+              </div>
+            ))}
+          </div>
+        </article>
       </section>
 
-      <section className="luxury-panel dashboard-side-panel alert-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">异常趋势</span><h3>失败 / 备用切换</h3></div></div>
-        <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data?.failure_trend ?? []}>
-              <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-              <XAxis dataKey="day" stroke="rgba(255,255,255,0.4)" />
-              <Tooltip contentStyle={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(15,18,32,0.92)" }} />
-              <Line type="monotone" dataKey="failures" stroke="#f87171" strokeWidth={3} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="fallbacks" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Mini Traffic Bar */}
+      <section className="panel panel-compact">
+        <div className="flex items-center justify-between" style={{ marginBottom: "var(--space-3)" }}>
+          <div>
+            <span className="eyebrow">实时链路</span>
+            <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginLeft: 8 }}>
+              最近 {trafficDots.length} 条请求
+            </span>
+          </div>
         </div>
-      </section>
-
-      <section className="luxury-panel providers-panel">
-        <div className="panel-heading"><div><span className="eyebrow">厂商排行</span><h3>成功率 Top</h3></div></div>
-        <div className="provider-list">
-          {(data?.provider_top ?? []).map((item) => (
-            <article key={item.name} className="provider-row">
-              <div><strong>{item.name}</strong><span>请求 {item.requests} 次 · 费用 {item.cost.toFixed(2)} 美元</span></div>
-              <span className="status-pill healthy">成功率 {(item.success_rate * 100).toFixed(1)}%</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="luxury-panel dashboard-side-panel distribution-card-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">热点模型</span><h3>活跃 Top</h3></div></div>
-        <div className="stack-list">
-          {(data?.hot_models ?? []).map((item) => (
-            <article key={item.name} className="luxury-panel nested-panel detail-card">
-              <strong>{item.name}</strong>
-              <p>请求 {item.requests} 次 · 费用 {item.cost.toFixed(2)} 美元 · 令牌 {item.tokens}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="luxury-panel live-flow-panel">
-        <div className="panel-heading compact-heading"><div><span className="eyebrow">最近请求</span><h3>实时链路</h3></div></div>
-        <div className="log-stream">
-          {(data?.recent_logs ?? []).map((item) => (
-            <article key={item.id} className="log-row compact-log-row">
-              <span>{item.path}</span>
-              <strong>{item.provider_id}</strong>
-              <span>{item.latency_ms} 毫秒</span>
-              <span>{item.status_label}</span>
-            </article>
-          ))}
-        </div>
+        {trafficDots.length > 0 ? (
+          <div className="flex items-center gap-3">
+            {trafficDots.map((dot) => (
+              <div
+                key={dot.id}
+                className="flex-col items-center gap-1"
+                style={{ cursor: "pointer" }}
+                title={`${dot.path}\n厂商: ${dot.provider}\n延迟: ${dot.latency}ms`}
+              >
+                <div
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: dot.color,
+                    boxShadow: `0 0 10px ${dot.color}50`,
+                    transition: "transform 150ms ease"
+                  }}
+                />
+                <span className="data-value" style={{ fontSize: "0.65rem", color: "var(--text-tertiary)" }}>
+                  {dot.latency}ms
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span style={{ fontSize: "0.82rem", color: "var(--text-tertiary)" }}>暂无最近请求数据</span>
+        )}
       </section>
     </div>
   );

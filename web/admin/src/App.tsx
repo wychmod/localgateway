@@ -7,9 +7,6 @@ import { RoutingPage } from "./pages/RoutingPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { LogsPage } from "./pages/LogsPage";
 import { SettingsPage } from "./pages/SettingsPage";
-import { QuickSetupPage } from "./pages/QuickSetupPage";
-import { VersionInfoPage } from "./pages/VersionInfoPage";
-import { BuildChecksPage } from "./pages/BuildChecksPage";
 
 export default function App() {
   return (
@@ -23,9 +20,6 @@ export default function App() {
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/logs" element={<LogsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/version" element={<VersionInfoPage />} />
-        <Route path="/build-checks" element={<BuildChecksPage />} />
-        <Route path="/quick-setup" element={<QuickSetupPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </AppShell>
