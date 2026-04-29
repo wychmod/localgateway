@@ -246,11 +246,14 @@ export function ProvidersPage() {
                     {providerTypeOptions.map((option) => (
                       <label
                         key={option.value}
-                        className="panel panel-compact"
+                        className="flex-col gap-1"
                         style={{
                           cursor: "pointer",
-                          borderColor: form.type === option.value ? "var(--accent)" : undefined,
-                          background: form.type === option.value ? "var(--accent-dim)" : undefined
+                          padding: "var(--space-3)",
+                          borderRadius: "var(--radius-sm)",
+                          background: form.type === option.value ? "var(--accent-dim)" : "var(--bg-base)",
+                          border: form.type === option.value ? "1px solid var(--accent)" : "1px solid var(--border-subtle)",
+                          transition: "all 150ms ease"
                         }}
                       >
                         <input

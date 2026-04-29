@@ -22,7 +22,6 @@ import clsx from "clsx";
 import { useUIStore } from "../store/ui-store";
 import { useAdminStore } from "../store/admin-store";
 import {
-  closeDesktopWindow,
   fetchDesktopStatus,
   fetchDesktopVersion,
   fetchRuntimeSummary,
@@ -216,7 +215,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <button type="button" className="btn btn-ghost btn-icon" onClick={handleToggleMaximise}>
               {desktopMaximised ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
-            <button type="button" className="btn btn-danger btn-icon" onClick={() => closeDesktopWindow()}>
+            <button type="button" className="btn btn-danger btn-icon" onClick={() => hideDesktopToTray()} title="隐藏到托盘">
               <X size={14} />
             </button>
           </div>
@@ -265,10 +264,7 @@ export function AppShell({ children }: PropsWithChildren) {
         {/* Topbar */}
         <header className="topbar">
           <div className="topbar-leading">
-            <div>
-              <span className="eyebrow">{currentPage?.label ?? "系统"}</span>
-              <h1 className="page-title" style={{ fontSize: "1.15rem", marginTop: 2 }}>{currentPage?.label ?? "灵枢控制台"}</h1>
-            </div>
+            <h1 className="page-title" style={{ fontSize: "1.15rem" }}>{currentPage?.label ?? "灵枢控制台"}</h1>
           </div>
           <div className="topbar-actions">
             <button

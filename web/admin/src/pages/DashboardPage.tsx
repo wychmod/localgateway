@@ -235,16 +235,12 @@ export function DashboardPage() {
             <span className="eyebrow">异常监控</span>
             <h2 className="section-title" style={{ marginTop: 4 }}>最近 Alert</h2>
           </div>
-          <div className="flex-col gap-3" style={{ flex: 1, overflow: "auto" }}>
+          <div className="flex-col gap-2" style={{ flex: 1, overflow: "auto" }}>
             {alerts.map((alert, i) => (
               <div
                 key={i}
-                className="panel panel-compact"
-                style={{
-                  borderLeft: `3px solid var(--${alert.level === "success" ? "accent" : alert.level === "warning" ? "warning" : "danger"})`,
-                  padding: "var(--space-3)",
-                  animationDelay: `${i * 60}ms`
-                }}
+                className={`alert-card ${alert.level}`}
+                style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
                   {alert.level === "success" ? (
@@ -284,11 +280,10 @@ export function DashboardPage() {
               >
                 <div
                   style={{
-                    width: 10,
-                    height: 10,
+                    width: 8,
+                    height: 8,
                     borderRadius: "50%",
                     background: dot.color,
-                    boxShadow: `0 0 10px ${dot.color}50`,
                     transition: "transform 150ms ease"
                   }}
                 />

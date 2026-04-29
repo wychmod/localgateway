@@ -185,7 +185,7 @@ export function SettingsPage() {
 
           <div className="flex-col gap-3">
             {setups.map((item) => (
-              <div key={item.name} className="panel panel-compact flex-col gap-3">
+              <div key={item.name} className="flex-col gap-3" style={{ padding: "var(--space-3) 0", borderBottom: "1px solid var(--border-subtle)" }}>
                 <div className="flex items-center justify-between">
                   <strong style={{ fontSize: "0.9rem" }}>{item.name}</strong>
                   <button
@@ -283,11 +283,14 @@ export function SettingsPage() {
               {checks.map((item, index) => (
                 <div
                   key={item.key}
-                  className="panel panel-compact"
+                  className="alert-card"
                   style={{
-                    borderLeft: `3px solid ${
-                      item.status === "ready" ? "var(--accent)" : item.status === "blocked" ? "var(--danger)" : "var(--warning)"
-                    }`,
+                    borderLeftColor:
+                      item.status === "ready"
+                        ? "var(--accent)"
+                        : item.status === "blocked"
+                        ? "var(--danger)"
+                        : "var(--warning)",
                     animationDelay: `${index * 40}ms`
                   }}
                 >
@@ -338,7 +341,7 @@ export function SettingsPage() {
             {report?.warnings?.length ? (
               <div className="flex-col gap-2">
                 {report.warnings.map((warning) => (
-                  <div key={warning} className="panel panel-compact" style={{ borderLeft: "3px solid var(--warning)" }}>
+                  <div key={warning} className="alert-card warning">
                     <strong style={{ fontSize: "0.82rem", color: "var(--warning)" }}>发布前注意</strong>
                     <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 4 }}>{warning}</p>
                   </div>
@@ -359,8 +362,8 @@ export function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex-col gap-3">
-            <div className="panel panel-compact flex items-center justify-between">
+          <div className="flex-col gap-2">
+            <div className="flex items-center justify-between" style={{ padding: "var(--space-3) 0", borderBottom: "1px solid var(--border-subtle)" }}>
               <div>
                 <strong style={{ fontSize: "0.9rem" }}>导出配置</strong>
                 <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 2 }}>下载当前系统配置的 JSON 备份</p>
@@ -370,7 +373,7 @@ export function SettingsPage() {
               </button>
             </div>
 
-            <div className="panel panel-compact flex items-center justify-between">
+            <div className="flex items-center justify-between" style={{ padding: "var(--space-3) 0", borderBottom: "1px solid var(--border-subtle)" }}>
               <div>
                 <strong style={{ fontSize: "0.9rem" }}>分发包信息</strong>
                 <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 2 }}>
@@ -382,7 +385,7 @@ export function SettingsPage() {
               </button>
             </div>
 
-            <div className="panel panel-compact flex items-center justify-between">
+            <div className="flex items-center justify-between" style={{ padding: "var(--space-3) 0" }}>
               <div>
                 <strong style={{ fontSize: "0.9rem" }}>清理日志</strong>
                 <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 2 }}>删除超过保留天数的旧日志</p>

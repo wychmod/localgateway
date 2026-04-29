@@ -285,16 +285,16 @@ export function LogsPage() {
                 ))}
               </div>
 
-              <div className="panel panel-compact" style={{ background: "var(--bg-base)" }}>
+              <div className="flex-col gap-2" style={{ padding: "var(--space-3) 0", borderTop: "1px solid var(--border-subtle)" }}>
                 <strong style={{ fontSize: "0.82rem" }}>详细说明</strong>
-                <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 4, lineHeight: 1.5 }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
                   {active.detail}
                 </p>
               </div>
 
-              <div className="panel panel-compact" style={{ background: "var(--bg-base)" }}>
+              <div className="flex-col gap-2" style={{ padding: "var(--space-3) 0", borderTop: "1px solid var(--border-subtle)" }}>
                 <strong style={{ fontSize: "0.82rem" }}>调用链路</strong>
-                <div className="flex-col gap-1" style={{ marginTop: 8 }}>
+                <div className="flex-col gap-1" style={{ marginTop: 4 }}>
                   <div className="flex items-center justify-between">
                     <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>请求格式</span>
                     <span style={{ fontSize: "0.8rem", fontFamily: "var(--font-mono)" }}>{String(active.metadata?.apiFormat ?? "未知")}</span>
@@ -327,14 +327,16 @@ export function LogsPage() {
                 </button>
                 {detailExpanded && (
                   <pre
-                    className="panel panel-compact"
                     style={{
                       marginTop: 8,
+                      padding: "var(--space-3)",
                       background: "var(--bg-base)",
+                      borderRadius: "var(--radius-sm)",
                       fontSize: "0.75rem",
                       overflow: "auto",
                       maxHeight: 300,
-                      fontFamily: "var(--font-mono)"
+                      fontFamily: "var(--font-mono)",
+                      color: "var(--text-secondary)"
                     }}
                   >
                     {JSON.stringify(active.metadata, null, 2)}

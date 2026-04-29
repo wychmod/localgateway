@@ -233,7 +233,7 @@ export function RoutingPage() {
                     </label>
                   </div>
 
-                  <div className="panel panel-compact span-2">
+                  <div className="flex-col gap-1 span-2" style={{ padding: "var(--space-3)", background: "var(--bg-base)", borderRadius: "var(--radius-sm)" }}>
                     <strong style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>链路预览</strong>
                     <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 4 }}>
                       主链路：{form.providerChain.join(" → ") || "未配置"}
@@ -291,7 +291,7 @@ export function RoutingPage() {
                     <Route size={14} /> 执行模拟
                   </button>
 
-                  <div className="panel" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", padding: "var(--space-4)", background: "var(--bg-base)", borderRadius: "var(--radius-sm)" }}>
                     <div>
                       <span className="eyebrow">目标线路</span>
                       <p style={{ fontSize: "0.9rem", fontWeight: 600, marginTop: 4 }}>{simulation.target}</p>
