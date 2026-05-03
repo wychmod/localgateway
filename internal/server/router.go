@@ -70,6 +70,9 @@ func (r *Router) mount() {
 	r.mux.Post("/v1/messages", r.handleClaudeMessages)
 
 	r.mux.Route("/admin/api", func(adminRouter chi.Router) {
+		if r.deps.Config.Server.AdminAuth.Enabled {
+			adminRouter.Use(r.adminBasicAuth)
+		}
 		adminRouter.Get("/logs/export", r.handleAdminLogsExport)
 		adminRouter.Get("/dashboard", r.handleAdminDashboard)
 		adminRouter.Get("/analytics", r.handleAdminAnalytics)
@@ -170,4 +173,17 @@ func (r *Router) serveAdminIndex(w http.ResponseWriter) {
 	stat, _ := f.Stat()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	http.ServeContent(w, &http.Request{URL: &url.URL{Path: "/admin/index.html"}}, "index.html", stat.ModTime(), f)
+}
+
+// adminBasicAuth enforces HTTP Basic Auth for admin API endpoints.
+func (r *Router) adminBasicAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		username, password, ok := req.BasicAuth()
+		if !ok || username != r.deps.Config.Server.AdminAuth.Username || password != r.deps.Config.Server.AdminAuth.Password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="LocalGateway Admin"`)
+			respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "管理后台需要认证，请输入正确的用户名和密码。"})
+			return
+		}
+		next.ServeHTTP(w, req)
+	})
 }

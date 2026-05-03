@@ -131,21 +131,21 @@ export async function fetchDesktopVersion(): Promise<string> {
 }
 export async function fetchRuntimeSummary(): Promise<DesktopRuntimeSummary> {
   if (!isDesktopMode) return emptyStatus.runtime;
-  return GetRuntimeSummary();
+  try { return await GetRuntimeSummary(); } catch { return emptyStatus.runtime; }
 }
 export async function fetchConfigSummary(): Promise<DesktopConfigSummary> {
   if (!isDesktopMode) return emptyStatus.configSummary;
-  return GetConfigSummary();
+  try { return await GetConfigSummary(); } catch { return emptyStatus.configSummary; }
 }
 export async function runDesktopSelfCheck(): Promise<DesktopSelfCheck> {
   if (!isDesktopMode) {
     return { health: "browser", checks: [], warnings: ["当前为浏览器模式，发布前检查器不可用"], completedAt: new Date().toISOString(), serverReachable: true };
   }
-  return RunSelfCheck();
+  try { return await RunSelfCheck(); } catch { return { health: "error", checks: [], warnings: ["自检执行异常"], completedAt: new Date().toISOString(), serverReachable: false }; }
 }
 export async function fetchWindowState(): Promise<DesktopWindowState> {
   if (!isDesktopMode) return emptyWindowState;
-  return GetWindowState();
+  try { return await GetWindowState(); } catch { return emptyWindowState; }
 }
 export function persistWindowState(next: DesktopWindowState) { if (!isDesktopMode) return; void SaveWindowState(next); }
 export async function restoreDesktopRoute() { if (!isDesktopMode) return "/dashboard"; return RestoreLastRoute(); }

@@ -27,7 +27,17 @@ func (r *Router) handleModels(w http.ResponseWriter, req *http.Request) {
 
 	entries := []modelEntry{}
 	for _, p := range providers {
-		entries = append(entries, modelEntry{ID: fmt.Sprintf("%s-default", p.Type), Object: "model", Created: time.Now().Unix(), OwnedBy: p.Name})
+		if !p.Enabled || p.Status == "disabled" || p.Status == "deleted" {
+			continue
+		}
+		modelList := decodeJSONStringArray(p.ModelsJSON)
+		if len(modelList) == 0 {
+			entries = append(entries, modelEntry{ID: fmt.Sprintf("%s-default", p.Type), Object: "model", Created: time.Now().Unix(), OwnedBy: p.Name})
+		} else {
+			for _, m := range modelList {
+				entries = append(entries, modelEntry{ID: m, Object: "model", Created: time.Now().Unix(), OwnedBy: p.Name})
+			}
+		}
 	}
 
 	respondJSON(w, http.StatusOK, modelsResponse{Object: "list", Data: entries})

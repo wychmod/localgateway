@@ -40,7 +40,7 @@ func (p *spaProxy) setRouter(router http.Handler) {
 
 func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	if strings.HasPrefix(path, "/admin/api/") || strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/auth/") {
+	if strings.HasPrefix(path, "/admin/api/") || strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/auth/") || strings.HasPrefix(path, "/v1/") || path == "/health" {
 		if !p.ready || p.router == nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusServiceUnavailable)

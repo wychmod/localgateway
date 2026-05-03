@@ -2,6 +2,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } f
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, Zap } from "lucide-react";
 import { isDesktopMode } from "../utils/desktop-bridge";
+import { api } from "../utils/api";
 
 type DashboardPayload = {
   overview: {
@@ -31,11 +32,12 @@ export function DashboardPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch("/admin/api/dashboard")
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = await res.json();
-        setData(payload.data ?? null);
+    api.get<DashboardPayload>("/dashboard")
+      .then((result) => {
+        if (!result.ok || !result.data) {
+          throw new Error(result.error ?? `加载失败`);
+        }
+        setData(result.data);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "加载失败"))
       .finally(() => setLoading(false));

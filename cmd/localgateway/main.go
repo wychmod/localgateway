@@ -248,9 +248,12 @@ func openWithChrome(rawURL string) error {
 }
 
 func openWithDefaultBrowser(rawURL string) error {
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		return exec.Command("rundll32", "url.dll,FileProtocolHandler", rawURL).Start()
+	case "darwin":
+		return exec.Command("open", rawURL).Start()
+	default:
+		return exec.Command("xdg-open", rawURL).Start()
 	}
-
-	return fmt.Errorf("default browser open is not implemented for this platform")
 }
