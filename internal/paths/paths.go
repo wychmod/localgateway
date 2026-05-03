@@ -137,10 +137,6 @@ const defaultConfigYAML = `server:
   read_timeout: 15
   write_timeout: 120
   idle_timeout: 120
-  admin_auth:
-    enabled: true
-    username: "admin"
-    password: "ChangeMeNow!"
 
 proxy:
   request_timeout: 120
