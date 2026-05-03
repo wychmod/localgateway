@@ -171,92 +171,120 @@ Dashboard 目前包含：
 
 ### 环境要求
 
-- Go `1.22+`
-- Node.js `20+`
-- npm `10+`
-- Windows：用于托盘模式与便携包构建
-- Wails CLI：用于桌面版构建
+| 依赖 | 版本 | 用途 |
+| --- | --- | --- |
+| Go | `1.22+` | 后端编译 |
+| Node.js | `20+` | 前端构建 |
+| npm | `10+` | 前端包管理 |
+| Wails CLI | `v2.12` | 桌面版构建（仅桌面版需要） |
 
-### 1. 克隆项目
+### 1. 本地开发 — 克隆与安装
 
 ```bash
+# 克隆仓库
 git clone <your-repo-url> localgateway
 cd localgateway
-```
 
-### 2. 安装前端依赖
+# 安装 Go 依赖
+go mod download
 
-```bash
+# 安装前端依赖
 cd web/admin
 npm install
 cd ../..
+
+# 安装 Wails CLI（仅桌面版开发需要）
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
 ```
 
-### 3. 准备配置
+### 2. 浏览器版启动（页面端）
+
+浏览器版以 HTTP Server 方式运行，通过浏览器访问管理后台。
 
 ```bash
-cp configs/config.example.yaml configs/config.yaml
-```
-
-默认运行时会自动解析用户配置路径；如需指定配置文件，可设置：
-
-```bash
-export LG_CONFIG="d:/idea/localgateway/configs/config.yaml"
-```
-
-Windows PowerShell：
-
-```powershell
-$env:LG_CONFIG = "d:\idea\localgateway\configs\config.yaml"
-```
-
-### 4. 构建管理后台资源
-
-```bash
+# 构建前端资源并嵌入 Go
 cd web/admin
 npm run build
 cd ../..
-```
 
-`npm run build` 会执行 Vite 构建，并通过 `web/admin/scripts/sync-embed.mjs` 同步内嵌资源。
-
-### 5. 启动浏览器版网关
-
-```bash
+# 启动服务
 go run ./cmd/localgateway
 ```
 
-访问管理后台：
+启动后访问：
 
 ```text
 http://127.0.0.1:18743/admin
 ```
 
-开发态 `go run` 会保留前台控制台，方便查看日志并通过 `Ctrl+C` 退出。
+开发模式下可分别启动前后端：
 
-## 构建与分发
+```bash
+# 终端 1：启动后端
+go run ./cmd/localgateway
 
-### 浏览器 / 托盘版便携包
-
-```powershell
-powershell -File build/package.ps1
+# 终端 2：启动前端开发服务器（热更新）
+cd web/admin
+npm run dev
 ```
 
-脚本会完成：
+前端开发服务器默认运行在 `http://127.0.0.1:5174`，API 请求会代理到后端。
 
-1. 生成应用图标和 Windows resource；
-2. 构建 React 管理后台；
-3. 复制前端产物到 Go embed 目录；
-4. 构建 Windows GUI 二进制；
-5. 组装便携目录与配置模板。
+### 3. 桌面版启动（Wails）
 
-### Wails 桌面版
+桌面版以内嵌 WebView 窗口运行，无需浏览器。
+
+```bash
+# 开发模式（热更新）
+wails dev
+
+# 或手动构建前端后运行
+cd web/admin
+npm run build:wails
+cd ../..
+wails dev
+```
+
+`wails dev` 会自动构建前端、生成 Go bindings 并启动桌面窗口。
+
+### 4. Windows 打包
 
 ```powershell
+# 浏览器 / 托盘版便携包
+powershell -File build/package.ps1
+
+# Wails 桌面版
 powershell -File build/desktop.ps1
 ```
 
-桌面版与浏览器版共享同一套 `internal/` 后端服务和 `web/admin/` 前端，只是运行在 Wails 原生窗口中，并提供窗口控制、托盘、菜单、通知、自检和状态恢复等桌面能力。
+便携包输出到 `build/portable/Lingshu/`，包含：
+- `lingshu.exe`（Windows GUI 模式，常驻托盘）
+- `config.yaml`（配置模板）
+
+桌面版输出到 `build/bin/Lingshu.exe`（Wails 原生窗口）。
+
+### 5. macOS 打包
+
+```bash
+# 构建前端
+cd web/admin
+npm run build:wails
+cd ../..
+
+# Wails 桌面版
+wails build -platform darwin/universal -o Lingshu.app
+```
+
+输出到 `build/bin/Lingshu.app`。
+
+如需生成 DMG：
+
+```bash
+# 使用 create-dmg（需先 brew install create-dmg）
+create-dmg build/bin/Lingshu.app build/bin/
+```
+
+## 构建与分发
 
 ### GitHub Actions
 
@@ -284,10 +312,6 @@ server:
   read_timeout: 15
   write_timeout: 120
   idle_timeout: 120
-  admin_auth:
-    enabled: true
-    username: "admin"
-    password: "ChangeMeNow!"
 
 proxy:
   request_timeout: 120
@@ -486,24 +510,28 @@ Fallback 结果会写入请求日志 metadata，并在以下位置可见：
 └── wails.json                 # Wails 配置
 ```
 
-## 开发命令
+## 开发命令速查
 
 ```bash
-# 后端开发
-go run ./cmd/localgateway
+# — 后端 —
+go run ./cmd/localgateway              # 启动浏览器版
+go build -o localgateway ./cmd/localgateway  # 编译二进制
 
-go build -o localgateway.exe ./cmd/localgateway
-
-# 前端开发
+# — 前端 —
 cd web/admin
-npm install
-npm run dev
-npm run build
-npm run preview
+npm install                            # 安装依赖
+npm run dev                            # 开发服务器（热更新）
+npm run build                          # 生产构建 + 同步 embed
+npm run build:wails                    # Wails 模式构建
 
-# Wails 前端构建模式
-cd web/admin
-npm run build:wails
+# — 桌面版 —
+wails dev                              # 开发模式（热更新）
+wails build                            # 生产构建
+
+# — 打包 —
+powershell -File build/package.ps1     # Windows 便携包
+powershell -File build/desktop.ps1     # Windows 桌面版
+wails build -platform darwin/universal  # macOS 桌面版
 ```
 
 ## 生产运行说明
@@ -517,7 +545,6 @@ npm run build:wails
 ## 安全建议
 
 - 不要把真实 Provider API Key 暴露给业务应用，业务侧只使用 Local Key。
-- 发布前修改默认管理后台密码 `ChangeMeNow!`。
 - 不要提交 `configs/config.yaml`、`data/`、`.secret`、日志和真实密钥。
 - 非必要不要将服务绑定到公网地址；如需外部访问，请放在可信反向代理或内网策略之后。
 - 开启 CORS 时显式配置 `allowed_origins`，避免宽泛开放。
