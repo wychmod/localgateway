@@ -1,13 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"io"
-	"mime"
 	"net/http"
-	"path"
-	"strings"
 
 	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2"
@@ -17,20 +12,15 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
-
-	adminembed "localgateway/build/embed"
 )
 
 type spaProxy struct {
-	router     http.Handler
-	assets     http.FileSystem
-	diskAssets http.FileSystem
-	ready      bool
+	router http.Handler
+	ready  bool
 }
 
 func newSPAProxy() *spaProxy {
-	adminAssets := adminembed.AdminFS()
-	return &spaProxy{assets: adminAssets, diskAssets: http.Dir("build/embed/admin")}
+	return &spaProxy{}
 }
 
 func (p *spaProxy) setRouter(router http.Handler) {
@@ -38,94 +28,17 @@ func (p *spaProxy) setRouter(router http.Handler) {
 	p.ready = true
 }
 
+// ServeHTTP delegates all requests to the shared router.
+// The router handles API endpoints, static assets, and SPA fallback uniformly.
+// This ensures desktop and browser modes behave identically.
 func (p *spaProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-	if strings.HasPrefix(path, "/admin/api/") || strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/auth/") || strings.HasPrefix(path, "/v1/") || path == "/health" {
-		if !p.ready || p.router == nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusServiceUnavailable)
-			_, _ = w.Write([]byte(`{"error":"server not ready"}`))
-			return
-		}
-		p.router.ServeHTTP(w, r)
+	if !p.ready || p.router == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte(`{"error":"server not ready"}`))
 		return
 	}
-
-	cleanPath := normalizeAssetPath(path)
-	if cleanPath == "" || cleanPath == "." {
-		p.serveEmbeddedFile(w, r, "index.html")
-		return
-	}
-
-	if file, err := p.openAsset(cleanPath); err == nil {
-		info, statErr := file.Stat()
-		_ = file.Close()
-		if statErr == nil && !info.IsDir() {
-			p.serveEmbeddedFile(w, r, cleanPath)
-			return
-		}
-		p.serveEmbeddedFile(w, r, "index.html")
-		return
-	}
-
-	// Only application routes should fall back to index.html.
-	// Missing static assets must remain 404 instead of returning HTML.
-	if isStaticAssetRequest(cleanPath) {
-		http.NotFound(w, r)
-		return
-	}
-
-	p.serveEmbeddedFile(w, r, "index.html")
-}
-
-func (p *spaProxy) serveEmbeddedFile(w http.ResponseWriter, r *http.Request, assetPath string) {
-	file, err := p.openAsset(assetPath)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-	defer file.Close()
-
-	info, err := file.Stat()
-	if err != nil || info.IsDir() {
-		http.NotFound(w, r)
-		return
-	}
-
-	data, err := io.ReadAll(file)
-	if err != nil {
-		http.Error(w, "failed to read asset", http.StatusInternalServerError)
-		return
-	}
-
-	contentType := mime.TypeByExtension(path.Ext(assetPath))
-	if contentType == "" {
-		contentType = http.DetectContentType(data)
-	}
-	w.Header().Set("Content-Type", contentType)
-	http.ServeContent(w, r, info.Name(), info.ModTime(), bytes.NewReader(data))
-}
-
-func (p *spaProxy) openAsset(assetPath string) (http.File, error) {
-	if file, err := p.assets.Open(assetPath); err == nil {
-		return file, nil
-	}
-	return p.diskAssets.Open(assetPath)
-}
-
-func normalizeAssetPath(requestPath string) string {
-	cleanPath := strings.TrimPrefix(requestPath, "/")
-	cleanPath = strings.TrimPrefix(cleanPath, "admin/")
-	cleanPath = path.Clean("/" + cleanPath)
-	return strings.TrimPrefix(cleanPath, "/")
-}
-
-func isStaticAssetRequest(path string) bool {
-	lastSegment := path
-	if idx := strings.LastIndex(path, "/"); idx >= 0 {
-		lastSegment = path[idx+1:]
-	}
-	return strings.Contains(lastSegment, ".")
+	p.router.ServeHTTP(w, r)
 }
 
 func buildDesktopMenu(app *DesktopApp) *menu.Menu {
